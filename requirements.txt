@@ -10,3 +10,4 @@ langchain-chroma
 langchain-text-splitters
 chromadb
 pypdf
+pysqlite3-binary
