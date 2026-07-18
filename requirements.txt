@@ -2,7 +2,7 @@
 pandas
 numpy
 scikit-learn
-tensorflow
+tensorflow==2.15.0
 langchain==0.1.16
 langchain-core
 langchain-community
