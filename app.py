@@ -34,7 +34,12 @@ st.write("An enterprise-grade orchestration combining a Deep Learning Intent Cla
 # --- 2. Caching Structural Resource Allocation ---
 @st.cache_resource
 def initialize_system_resources():
-    # 1. بناء الموديل بهيكل صريح ومستقل
+    # 1. استيراد المكتبات جوه الدالة لضمان توفرها
+    import pickle
+    import tensorflow as tf
+    from langchain_community.embeddings import HuggingFaceEmbeddings
+    from langchain_community.llms import HuggingFaceHub
+    # 2. بناء الموديل وتحميل الأوزان
     model = tf.keras.Sequential([
         tf.keras.layers.InputLayer(input_shape=(200,)),
         tf.keras.layers.Embedding(15000, 64),
@@ -45,24 +50,19 @@ def initialize_system_resources():
         tf.keras.layers.Dropout(0.2),
         tf.keras.layers.Dense(4, activation='softmax')
     ])
-    
-    # 2. تحميل الأوزان فقط (هذا يتخطى تماماً إعدادات الـ batch_shape القديمة)
     model.load_weights(MODEL_PATH)
-    classifier = model
-
-    # 3. تحميل التوكنيزر وباقي الموارد
+    # 3. تحميل التوكنيزر
     with open(TOKENIZER_PATH, "rb") as handle:
         token_generator = pickle.load(handle)
-
+    # 4. باقي الخدمات
     embedding_client = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-
     llm_node = HuggingFaceHub(
         repo_id="mistralai/Mistral-7B-Instruct-v0.2",
         model_kwargs={"temperature": 0.1, "max_new_tokens": 512},
         huggingfacehub_api_token=st.secrets["HF_TOKEN"]
     )
     
-    return classifier, token_generator, embedding_client, llm_node
+    return model, token_generator, embedding_client, llm_node
 if os.path.exists(MODEL_PATH) and os.path.exists(TOKENIZER_PATH):
     dl_model, tokenizer, embeddings, llm = initialize_system_resources()
 else:
