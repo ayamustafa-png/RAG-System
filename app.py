@@ -42,16 +42,40 @@ st.write(
 
 
 # --- 2. Cached Resource Initialization ---
+VOCAB_SIZE = 15000
+EMBEDDING_DIM = 64
+
+
+def _build_classifier_architecture():
+    # Must match train_model.py EXACTLY (same layer order/types) so that
+    # load_weights() below can map the saved weights correctly. We rebuild
+    # the architecture instead of using tf.keras.models.load_model() because
+    # the .h5 file can be produced by a slightly different Keras version than
+    # what's installed on Streamlit Cloud, which makes full-config loading
+    # (load_model) fail with a TypeError on from_config. Loading weights only
+    # sidesteps that config-schema mismatch.
+    return tf.keras.Sequential(
+        [
+            tf.keras.Input(shape=(MAX_SEQUENCE_LENGTH,)),
+            tf.keras.layers.Embedding(VOCAB_SIZE, EMBEDDING_DIM),
+            tf.keras.layers.LSTM(64, return_sequences=True),
+            tf.keras.layers.Dropout(0.3),
+            tf.keras.layers.LSTM(32),
+            tf.keras.layers.Dense(32, activation="relu"),
+            tf.keras.layers.Dropout(0.2),
+            tf.keras.layers.Dense(len(TOP_CATEGORIES), activation="softmax"),
+        ]
+    )
+
+
 @st.cache_resource(show_spinner="Loading models and services...")
 def initialize_system_resources():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     model_file = os.path.join(base_dir, MODEL_PATH)
     tokenizer_file = os.path.join(base_dir, TOKENIZER_PATH)
 
-    # Load the FULL saved model directly (architecture + weights) instead of
-    # re-declaring the architecture by hand, which is fragile and easy to
-    # get out of sync with train_model.py.
-    dl_model = tf.keras.models.load_model(model_file)
+    dl_model = _build_classifier_architecture()
+    dl_model.load_weights(model_file)
 
     with open(tokenizer_file, "rb") as handle:
         token_generator = pickle.load(handle)
