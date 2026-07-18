@@ -93,7 +93,9 @@ def initialize_system_resources():
         st.stop()
 
     llm_node = HuggingFaceEndpoint(
-        repo_id="mistralai/Mistral-7B-Instruct-v0.2",
+        repo_id="Qwen/Qwen2.5-7B-Instruct",
+        task="text-generation",
+        provider="auto",  # let Hugging Face route to whichever partner (Together, Fireworks, ...) currently serves this model
         temperature=0.1,
         max_new_tokens=512,
         huggingfacehub_api_token=hf_token,
@@ -160,7 +162,7 @@ with st.sidebar:
         "• DL Intent Engine: **LSTM (Keras Backend)**\n"
         "• Vector DB Hub: **ChromaDB Target**\n"
         "• Embedding Model: **All-MiniLM-L6-v2 (HuggingFace)**\n"
-        "• Core Generative LLM: **Mistral-7B-Instruct (HuggingFace Inference API)**"
+        "• Core Generative LLM: **Qwen2.5-7B-Instruct (HuggingFace Inference Providers)**"
     )
 
 # Initialize Vector DB link if data exists
@@ -231,7 +233,12 @@ if user_query:
                         )
                         st.info(document.page_content)
             except Exception as e:
-                st.error(f"حصل خطأ أثناء توليد الإجابة من الـ LLM: {e}")
+                st.error(
+                    f"حصل خطأ أثناء توليد الإجابة من الـ LLM: {e}\n\n"
+                    "لو الرسالة بتقول إن الموديل مش متاح (not supported / 404)، غيّري "
+                    "قيمة `repo_id` في app.py لموديل تاني متاح دلوقتي على "
+                    "https://huggingface.co/models?inference_provider=all&pipeline_tag=text-generation"
+                )
     else:
         st.warning(
             "System Notice: RAG pipeline is offline. Populate the target folder and execute "
