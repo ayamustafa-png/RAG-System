@@ -2,6 +2,7 @@
 pandas
 numpy
 scikit-learn
+tensorflow
 langchain
 langchain-core
 langchain-community
@@ -9,5 +10,3 @@ langchain-chroma
 langchain-text-splitters
 chromadb
 pypdf
-langchain-community
-langchain-text-splitters
