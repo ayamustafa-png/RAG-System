@@ -12,7 +12,7 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
-from langchain_community.llms import Ollama
+from langchain_groq import ChatGroq
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain_core.prompts import ChatPromptTemplate
@@ -42,7 +42,7 @@ def initialize_system_resources():
 
     embedding_client = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
-    llm_node = Ollama(model="llama3", temperature=0.1)
+   llm_node = ChatGroq(model="llama3-8b-8192", temperature=0.1, groq_api_key=st.secrets["GROQ_API_KEY"])
 
     return classifier, token_generator, embedding_client, llm_node
 
