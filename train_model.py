@@ -1,6 +1,5 @@
 import os
 import json
-import pickle
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -13,7 +12,7 @@ from tensorflow.keras.layers import Embedding, LSTM, Dense, Dropout, Input
 # --- 1. Configuration & Data Ingestion ---
 DATA_PATH = "data/arxiv-metadata-oai-snapshot.json"
 MODEL_OUTPUT_PATH = "academic_classifier_model.h5"
-TOKENIZER_OUTPUT_PATH = "tokenizer.pickle"
+TOKENIZER_OUTPUT_PATH = "tokenizer.json"
 SAMPLE_SIZE = 40000
 TOP_CATEGORIES = ['cs', 'math', 'physics', 'astro-ph']
 
@@ -84,7 +83,12 @@ model.fit(
 )
 
 model.save(MODEL_OUTPUT_PATH)
-with open(TOKENIZER_OUTPUT_PATH, "wb") as handle:
-    pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
+# Saved as JSON (tokenizer.to_json()) instead of pickle: pickle embeds the exact
+# Python/Keras module path of the Tokenizer class, which breaks if the
+# deployment environment has a different Keras major version (e.g. Keras 2 vs
+# Keras 3). JSON only stores the word index / config, so it loads anywhere via
+# tensorflow.keras.preprocessing.text.tokenizer_from_json().
+with open(TOKENIZER_OUTPUT_PATH, "w", encoding="utf-8") as handle:
+    handle.write(tokenizer.to_json())
 
 print(f"\n[+] Compilation successful. Deliverables saved: '{MODEL_OUTPUT_PATH}' and '{TOKENIZER_OUTPUT_PATH}'.")
