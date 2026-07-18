@@ -1,9 +1,10 @@
 __import__('pysqlite3')
 import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-
-from langchain_community.embeddings import HuggingFaceEmbeddings
 import os
+os.environ["TF_USE_LEGACY_KERAS"] = "1"
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.llms import HuggingFaceHub  
 import pickle
 import numpy as np
 import streamlit as st
@@ -12,7 +13,6 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
-from langchain_groq import ChatGroq
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain_core.prompts import ChatPromptTemplate
@@ -42,7 +42,11 @@ def initialize_system_resources():
 
     embedding_client = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
-   llm_node = ChatGroq(model="llama3-8b-8192", temperature=0.1, groq_api_key=st.secrets["GROQ_API_KEY"])
+llm_node = HuggingFaceHub(
+   repo_id="mistralai/Mistral-7B-Instruct-v0.2",
+    model_kwargs={"temperature": 0.1, "max_new_tokens": 512},
+    huggingfacehub_api_token=st.secrets["HF_TOKEN"]
+)
 
     return classifier, token_generator, embedding_client, llm_node
 
