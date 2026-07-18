@@ -36,18 +36,15 @@ st.write("An enterprise-grade orchestration combining a Deep Learning Intent Cla
 def initialize_system_resources():
     """Load serialized deep learning assets and construct remote/local LLM client interfaces."""
     classifier = tf.keras.models.load_model(MODEL_PATH)
-
     with open(TOKENIZER_PATH, "rb") as handle:
         token_generator = pickle.load(handle)
-
     embedding_client = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-
-llm_node = HuggingFaceHub(
-   repo_id="mistralai/Mistral-7B-Instruct-v0.2",
-    model_kwargs={"temperature": 0.1, "max_new_tokens": 512},
-    huggingfacehub_api_token=st.secrets["HF_TOKEN"]
-)
-
+    llm_node = HuggingFaceHub(
+        repo_id="mistralai/Mistral-7B-Instruct-v0.2",
+        model_kwargs={"temperature": 0.1, "max_new_tokens": 512},
+        huggingfacehub_api_token=st.secrets["HF_TOKEN"]
+    )
+    
     return classifier, token_generator, embedding_client, llm_node
 
 if os.path.exists(MODEL_PATH) and os.path.exists(TOKENIZER_PATH):
