@@ -11,3 +11,4 @@ chromadb
 pypdf
 sentence-transformers
 huggingface_hub
+pysqlite3-binary
