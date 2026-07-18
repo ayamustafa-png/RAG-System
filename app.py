@@ -34,22 +34,23 @@ st.write("An enterprise-grade orchestration combining a Deep Learning Intent Cla
 # --- 2. Caching Structural Resource Allocation ---
 @st.cache_resource
 def initialize_system_resources():
-    # 1. تعريف الموديل من جديد بنفس الهيكلية (بدون batch_shape)
-    model = Sequential([
-        Input(shape=(200,)),
-        Embedding(15000, 64),
-        LSTM(64, return_sequences=True),
-        Dropout(0.3),
-        LSTM(32),
-        Dense(32, activation='relu'),
-        Dropout(0.2),
-        Dense(4, activation='softmax')
+    # 1. بناء الموديل بهيكل صريح ومستقل
+    model = tf.keras.Sequential([
+        tf.keras.layers.InputLayer(input_shape=(200,)),
+        tf.keras.layers.Embedding(15000, 64),
+        tf.keras.layers.LSTM(64, return_sequences=True),
+        tf.keras.layers.Dropout(0.3),
+        tf.keras.layers.LSTM(32),
+        tf.keras.layers.Dense(32, activation='relu'),
+        tf.keras.layers.Dropout(0.2),
+        tf.keras.layers.Dense(4, activation='softmax')
     ])
     
-    # 2. تحميل الأوزان فقط بدل الموديل الكامل (ده بيشيل المشكلة)
+    # 2. تحميل الأوزان فقط (هذا يتخطى تماماً إعدادات الـ batch_shape القديمة)
     model.load_weights(MODEL_PATH)
     classifier = model
 
+    # 3. تحميل التوكنيزر وباقي الموارد
     with open(TOKENIZER_PATH, "rb") as handle:
         token_generator = pickle.load(handle)
 
