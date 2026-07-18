@@ -18,7 +18,7 @@ from tensorflow.keras.preprocessing.text import tokenizer_from_json
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings, HuggingFaceEndpoint
+from langchain_huggingface import HuggingFaceEmbeddings, HuggingFaceEndpoint, ChatHuggingFace
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain_core.prompts import ChatPromptTemplate
@@ -92,14 +92,15 @@ def initialize_system_resources():
         )
         st.stop()
 
-    llm_node = HuggingFaceEndpoint(
+    llm_endpoint = HuggingFaceEndpoint(
         repo_id="Qwen/Qwen2.5-7B-Instruct",
-        task="text-generation",
-        provider="auto",  # let Hugging Face route to whichever partner (Together, Fireworks, ...) currently serves this model
+        task="conversational",  # this model is only served as a chat model on the "together" provider
+        provider="auto",  # let Hugging Face route to whichever partner currently serves this model
         temperature=0.1,
         max_new_tokens=512,
         huggingfacehub_api_token=hf_token,
     )
+    llm_node = ChatHuggingFace(llm=llm_endpoint)
 
     return dl_model, token_generator, embedding_client, llm_node
 
