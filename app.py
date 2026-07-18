@@ -8,11 +8,12 @@ except ImportError:
     pass
 
 import os
-import pickle
+import json
 import numpy as np
 import streamlit as st
 import tensorflow as tf
 from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.preprocessing.text import tokenizer_from_json
 
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -27,7 +28,7 @@ PAPERS_DIR = "papers_to_chat"
 DB_DIR = "chroma_db"
 TOP_CATEGORIES = ["cs", "math", "physics", "astro-ph"]
 MODEL_PATH = "academic_classifier_model.h5"
-TOKENIZER_PATH = "tokenizer.pickle"
+TOKENIZER_PATH = "tokenizer.json"
 MAX_SEQUENCE_LENGTH = 200
 
 if not os.path.exists(PAPERS_DIR):
@@ -77,8 +78,8 @@ def initialize_system_resources():
     dl_model = _build_classifier_architecture()
     dl_model.load_weights(model_file)
 
-    with open(tokenizer_file, "rb") as handle:
-        token_generator = pickle.load(handle)
+    with open(tokenizer_file, "r", encoding="utf-8") as handle:
+        token_generator = tokenizer_from_json(handle.read())
 
     embedding_client = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
