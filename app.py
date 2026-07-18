@@ -1,8 +1,8 @@
 __import__('pysqlite3')
 import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-from langchain.chains import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
+
+from langchain_community.embeddings import HuggingFaceEmbeddings
 import os
 import pickle
 import numpy as np
@@ -12,7 +12,6 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.llms import Ollama
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.retrieval import create_retrieval_chain
@@ -41,14 +40,12 @@ def initialize_system_resources():
     with open(TOKENIZER_PATH, "rb") as handle:
         token_generator = pickle.load(handle)
 
-    embedding_client = OllamaEmbeddings(
-        model="nomic-embed-text",
-        base_url="http://127.0.0.1:11434"
-    )
+    embedding_client = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
     llm_node = Ollama(model="llama3", temperature=0.1)
 
     return classifier, token_generator, embedding_client, llm_node
+
 if os.path.exists(MODEL_PATH) and os.path.exists(TOKENIZER_PATH):
     dl_model, tokenizer, embeddings, llm = initialize_system_resources()
 else:
@@ -85,6 +82,7 @@ def execute_vector_ingestion():
 
         st.sidebar.success(f"ETL Execution complete. Persisted {len(chunks)} chunks.")
         return vector_store
+
 # --- 4. Sidebar Controller Dashboard ---
 with st.sidebar:
     st.header("⚙️ System Control Panel")
@@ -96,7 +94,7 @@ with st.sidebar:
         
     st.markdown("---")
     st.markdown("### 📊 Infrastructure Specifications:")
-    st.info("• DL Intent Engine: **LSTM (Keras Backend)**\n• Vector DB Hub: **ChromaDB Target**\n• Embedding Model: **Nomic-Embed-Text**\n• Core Generative LLM: **Ollama (Llama 3)**")
+    st.info("• DL Intent Engine: **LSTM (Keras Backend)**\n• Vector DB Hub: **ChromaDB Target**\n• Embedding Model: **All-MiniLM-L6-v2 (HuggingFace)**\n• Core Generative LLM: **Ollama (Llama 3)**")
 
 # Initialize Vector DB link if data exists
 vector_db = None
@@ -140,7 +138,8 @@ if user_query:
             ("human", "{input}"),
         ])
         
-       
+        question_answer_chain = create_stuff_documents_chain(llm, prompt_template)
+        rag_orchestration_chain = create_retrieval_chain(retriever_node, question_answer_chain)
         
         with st.spinner("Retrieving local semantic knowledge and generating structural response..."):
             execution_response = rag_orchestration_chain.invoke({"input": user_query})
