@@ -34,11 +34,27 @@ st.write("An enterprise-grade orchestration combining a Deep Learning Intent Cla
 # --- 2. Caching Structural Resource Allocation ---
 @st.cache_resource
 def initialize_system_resources():
-    """Load serialized deep learning assets and construct remote/local LLM client interfaces."""
-    classifier = tf.keras.models.load_model(MODEL_PATH)
+    # 1. تعريف الموديل من جديد بنفس الهيكلية (بدون batch_shape)
+    model = Sequential([
+        Input(shape=(200,)),
+        Embedding(15000, 64),
+        LSTM(64, return_sequences=True),
+        Dropout(0.3),
+        LSTM(32),
+        Dense(32, activation='relu'),
+        Dropout(0.2),
+        Dense(4, activation='softmax')
+    ])
+    
+    # 2. تحميل الأوزان فقط بدل الموديل الكامل (ده بيشيل المشكلة)
+    model.load_weights(MODEL_PATH)
+    classifier = model
+
     with open(TOKENIZER_PATH, "rb") as handle:
         token_generator = pickle.load(handle)
+
     embedding_client = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+
     llm_node = HuggingFaceHub(
         repo_id="mistralai/Mistral-7B-Instruct-v0.2",
         model_kwargs={"temperature": 0.1, "max_new_tokens": 512},
@@ -46,7 +62,6 @@ def initialize_system_resources():
     )
     
     return classifier, token_generator, embedding_client, llm_node
-
 if os.path.exists(MODEL_PATH) and os.path.exists(TOKENIZER_PATH):
     dl_model, tokenizer, embeddings, llm = initialize_system_resources()
 else:
