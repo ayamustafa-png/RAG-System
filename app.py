@@ -1,3 +1,5 @@
+from langchain.chains import create_retrieval_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
 import os
 import pickle
 import numpy as np
@@ -135,8 +137,7 @@ if user_query:
             ("human", "{input}"),
         ])
         
-        document_chain = create_stuff_documents_chain(llm, prompt_template)
-        rag_orchestration_chain = create_retrieval_chain(retriever_node, document_chain)
+       
         
         with st.spinner("Retrieving local semantic knowledge and generating structural response..."):
             execution_response = rag_orchestration_chain.invoke({"input": user_query})
