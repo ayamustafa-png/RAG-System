@@ -12,3 +12,4 @@ chromadb
 pypdf
 pysqlite3-binary
 sentence-transformers
+tf-keras
