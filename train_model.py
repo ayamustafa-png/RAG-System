@@ -3,11 +3,12 @@ import json
 import pickle
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Embedding, LSTM, Dense, Dropout
+from tensorflow.keras.layers import Embedding, LSTM, Dense, Dropout, Input
 
 # --- 1. Configuration & Data Ingestion ---
 DATA_PATH = "data/arxiv-metadata-oai-snapshot.json"
@@ -30,13 +31,9 @@ with open(DATA_PATH, "r", encoding="utf-8") as file:
 df = pd.DataFrame(raw_data)[['abstract', 'categories']]
 
 # --- 2. Label Preprocessing & Encoding ---
-# Extract the primary high-level taxonomic category
 df['main_category'] = df['categories'].apply(lambda x: x.split()[0].split('.')[0])
-
-# Filter dataset to balance across target classes
 df = df[df['main_category'].isin(TOP_CATEGORIES)].reset_index(drop=True)
 
-# Map text categories to numerical integer labels
 category_mapping = {category: idx for idx, category in enumerate(TOP_CATEGORIES)}
 df['label'] = df['main_category'].map(category_mapping)
 
@@ -64,7 +61,8 @@ X_test_padded = pad_sequences(X_test_seq, maxlen=MAX_SEQUENCE_LENGTH, padding='p
 EMBEDDING_DIM = 64
 
 model = Sequential([
-    Embedding(VOCAB_SIZE, EMBEDDING_DIM, input_length=MAX_SEQUENCE_LENGTH),
+    Input(shape=(MAX_SEQUENCE_LENGTH,)),
+    Embedding(VOCAB_SIZE, EMBEDDING_DIM),
     LSTM(64, return_sequences=True),
     Dropout(0.3),
     LSTM(32),
@@ -85,7 +83,6 @@ model.fit(
     batch_size=64
 )
 
-# Export structural configurations and learned weights
 model.save(MODEL_OUTPUT_PATH)
 with open(TOKENIZER_OUTPUT_PATH, "wb") as handle:
     pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
