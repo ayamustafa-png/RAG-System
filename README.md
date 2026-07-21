@@ -1,6 +1,3 @@
-# System Architecture & Technical Specifications: Smart Academic Assistant
-
-This document provides an exhaustive, production-grade technical specification and architectural decomposition of the **Smart Academic Assistant** (Hybrid RAG + Deep Learning Classifier Framework), derived directly from the source code.
 
 ---
 # Smart Academic Research Assistant: Technical Architecture & Pipeline Documentation
@@ -480,7 +477,9 @@ graph TD
 
 
 
+# System Architecture & Technical Specifications: Smart Academic Assistant
 
+This document provides an exhaustive, production-grade technical specification and architectural decomposition of the **Smart Academic Assistant** (Hybrid RAG + Deep Learning Classifier Framework), derived directly from the source code.
 
 ## 1. Complete Project Architecture for "local" 
 
