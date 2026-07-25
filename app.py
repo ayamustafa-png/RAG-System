@@ -46,90 +46,244 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
 
     html, body, [class*="css"]  {
-        font-family: 'Cairo', sans-serif;
+        font-family: 'Cairo', 'Inter', sans-serif;
     }
 
+    :root {
+        --primary: #4338CA;
+        --primary-dark: #312E81;
+        --accent: #0EA5E9;
+        --accent-warm: #D97706;
+        --gold: #EAB308;
+        --surface: #FFFFFF;
+        --surface-muted: #F7F8FD;
+        --border: #E4E7F5;
+        --text-main: #171A2E;
+        --text-soft: #6B7280;
+        --success: #059669;
+        --danger: #DC2626;
+    }
+
+    .stApp {
+        background:
+            radial-gradient(circle at 100% 0%, rgba(67, 56, 202, 0.06) 0%, transparent 45%),
+            radial-gradient(circle at 0% 100%, rgba(14, 165, 233, 0.06) 0%, transparent 45%),
+            linear-gradient(180deg, #F7F8FD 0%, #F0F2FB 100%);
+    }
+
+    /* ===== الهيدر ===== */
     .main-header {
+        position: relative;
+        overflow: hidden;
         display: flex;
         align-items: center;
-        gap: 16px;
-        padding: 22px 28px;
-        border-radius: 18px;
-        background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
-        box-shadow: 0 8px 30px rgba(37, 99, 235, 0.25);
-        margin-bottom: 20px;
+        gap: 20px;
+        padding: 32px 36px;
+        border-radius: 26px;
+        background: linear-gradient(115deg, #1E1B4B 0%, #4338CA 38%, #0EA5E9 100%);
+        box-shadow: 0 18px 45px rgba(30, 27, 75, 0.35);
+        margin-bottom: 24px;
+    }
+    .main-header::after {
+        content: "";
+        position: absolute;
+        top: -70px;
+        left: -50px;
+        width: 260px;
+        height: 260px;
+        background: radial-gradient(circle, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 70%);
+        border-radius: 50%;
+    }
+    .main-header::before {
+        content: "";
+        position: absolute;
+        bottom: -90px;
+        right: -60px;
+        width: 240px;
+        height: 240px;
+        background: radial-gradient(circle, rgba(234, 179, 8, 0.16) 0%, rgba(234, 179, 8, 0) 70%);
+        border-radius: 50%;
     }
     .main-header .icon-badge {
-        font-size: 38px;
-        background: rgba(255,255,255,0.18);
-        border-radius: 14px;
-        padding: 8px 14px;
+        font-size: 42px;
+        background: rgba(255,255,255,0.15);
+        border: 1px solid rgba(255,255,255,0.28);
+        border-radius: 20px;
+        padding: 14px 20px;
+        backdrop-filter: blur(8px);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+        z-index: 1;
     }
+    .main-header .header-text { z-index: 1; }
     .main-header h1 {
         color: white;
         margin: 0;
-        font-size: 24px;
-        font-weight: 800;
-    }
-    .main-header p {
-        color: rgba(255,255,255,0.9);
-        margin: 4px 0 0 0;
-        font-size: 14px;
-    }
-
-    .metric-card {
-        background: #f8f9fc;
-        border: 1px solid #e5e7eb;
-        border-radius: 14px;
-        padding: 16px 18px;
-        text-align: center;
-    }
-    .metric-card .metric-value {
         font-size: 26px;
         font-weight: 800;
-        color: #2563EB;
+        letter-spacing: 0.2px;
     }
-    .metric-card .metric-label {
-        font-size: 12px;
-        color: #6b7280;
-        margin-top: 2px;
+    .main-header .subtitle-ar {
+        display: block;
+        direction: rtl;
+        text-align: right;
+        color: rgba(255,255,255,0.95);
+        margin-top: 6px;
+        font-size: 14.5px;
+        font-weight: 500;
+    }
+    .main-header .subtitle-en {
+        display: block;
+        direction: ltr;
+        text-align: left;
+        color: rgba(255,255,255,0.72);
+        margin-top: 3px;
+        font-size: 12.5px;
+        font-weight: 500;
+        letter-spacing: 0.3px;
     }
 
+    /* ===== بطاقات الإحصائيات ===== */
+    .metric-card {
+        position: relative;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 20px 22px;
+        text-align: right;
+        box-shadow: 0 6px 18px rgba(67, 56, 202, 0.07);
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+        height: 100%;
+        overflow: hidden;
+    }
+    .metric-card::before {
+        content: "";
+        position: absolute;
+        top: 0; right: 0; left: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary), var(--accent), var(--gold));
+    }
+    .metric-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 14px 30px rgba(67, 56, 202, 0.14);
+    }
+    .metric-card .metric-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        margin-bottom: 10px;
+    }
+    .metric-icon-indigo { background: rgba(79, 70, 229, 0.12); }
+    .metric-icon-cyan { background: rgba(6, 182, 212, 0.12); }
+    .metric-icon-amber { background: rgba(245, 158, 11, 0.12); }
+    .metric-card .metric-value {
+        font-size: 30px;
+        font-weight: 800;
+        color: var(--text-main);
+        line-height: 1.1;
+    }
+    .metric-card .metric-label {
+        font-size: 13px;
+        color: var(--text-soft);
+        margin-top: 4px;
+        font-weight: 600;
+    }
+
+    /* ===== بطاقة المصدر ===== */
     .source-card {
-        background: #f8f9fc;
-        border-right: 3px solid #7C3AED;
-        border-radius: 10px;
-        padding: 10px 14px;
+        background: var(--surface-muted);
+        border: 1px solid var(--border);
+        border-right: 4px solid var(--accent);
+        border-radius: 12px;
+        padding: 12px 16px;
         margin-bottom: 8px;
         font-size: 13px;
     }
     .source-card .source-title {
-        color: #7C3AED;
+        color: var(--primary-dark);
         font-weight: 700;
         margin-bottom: 4px;
     }
 
+    /* ===== شارات الحالة ===== */
     .status-pill {
-        display: inline-block;
-        padding: 4px 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
         border-radius: 999px;
-        font-size: 12px;
+        font-size: 12.5px;
         font-weight: 700;
     }
     .status-ok { background: rgba(16, 185, 129, 0.12); color: #059669; }
     .status-bad { background: rgba(239, 68, 68, 0.12); color: #dc2626; }
 
+    /* ===== شرائح الملفات ===== */
     .file-chip {
-        display: inline-block;
-        background: #eef2ff;
-        color: #4338ca;
-        border-radius: 8px;
-        padding: 4px 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: linear-gradient(120deg, #EEF2FF, #F0F9FF);
+        border: 1px solid #DCE3FB;
+        color: var(--primary-dark);
+        border-radius: 10px;
+        padding: 6px 12px;
         font-size: 12px;
-        margin: 2px;
+        font-weight: 600;
+        margin: 3px;
+    }
+
+    /* ===== حالة البداية الفاضية ===== */
+    .empty-state {
+        background: var(--surface);
+        border: 1px dashed #C7D2FE;
+        border-radius: 22px;
+        padding: 46px 30px;
+        text-align: center;
+        margin: 10px 0 26px 0;
+    }
+    .empty-state .empty-icon {
+        font-size: 44px;
+        margin-bottom: 12px;
+    }
+    .empty-state h3 {
+        color: var(--text-main);
+        font-weight: 800;
+        margin-bottom: 6px;
+    }
+    .empty-state p {
+        color: var(--text-soft);
+        font-size: 14px;
+        margin-bottom: 18px;
+    }
+
+    /* ===== تخصيص الشريط الجانبي ===== */
+    section[data-testid="stSidebar"] {
+        background: #FFFFFF;
+        border-left: 1px solid var(--border);
+    }
+    section[data-testid="stSidebar"] .stButton button {
+        border-radius: 12px;
+        font-weight: 700;
+    }
+
+    /* ===== تخصيص مربع السؤال ===== */
+    [data-testid="stChatInput"] textarea {
+        border-radius: 16px !important;
+    }
+
+    /* عنوان أقسام عامة */
+    .section-title {
+        font-weight: 800;
+        color: var(--text-main);
+        font-size: 15px;
+        margin: 4px 0 10px 0;
     }
     </style>
     """,
@@ -141,9 +295,10 @@ st.markdown(
     """
     <div class="main-header">
         <div class="icon-badge">📚</div>
-        <div>
+        <div class="header-text">
             <h1>Smart Academic Research Assistant</h1>
-            <p>Hybrid RAG + Deep Learning Framework — تصنيف ذكي للأبحاث + إجابة بالاعتماد على مستنداتك</p>
+            <span class="subtitle-ar">مساعد بحثي ذكي بيصنّف سؤالك ويجاوبك بالاعتماد على مستنداتك فعليًا</span>
+            <span class="subtitle-en">Hybrid RAG + Deep Learning Classification Framework</span>
         </div>
     </div>
     """,
@@ -262,7 +417,7 @@ def get_indexed_pdf_files():
 
 
 with st.sidebar:
-    st.markdown("### 📤 رفع مستندات جديدة")
+    st.markdown('<div class="section-title">📤 رفع مستندات جديدة</div>', unsafe_allow_html=True)
 
     uploaded_files = st.file_uploader(
         "ارفعي ملف أو أكتر بصيغة PDF",
@@ -282,34 +437,35 @@ with st.sidebar:
                 new_files_saved += 1
 
         if new_files_saved:
-            st.success(f"✅ اتحفظ {new_files_saved} ملف جديد في '{PAPERS_DIR}/'.")
+            st.success(f"✅ اتحفظ {new_files_saved} ملف جديد في المجلد.")
 
     current_files = get_indexed_pdf_files()
     if current_files:
-        st.caption(f"📄 {len(current_files)} ملف جاهز للفهرسة:")
-        chips_html = "".join(f'<span class="file-chip">{f}</span>' for f in current_files)
+        st.caption(f"📄 {len(current_files)} ملف جاهز للفهرسة")
+        chips_html = "".join(f'<span class="file-chip">📄 {f}</span>' for f in current_files)
         st.markdown(chips_html, unsafe_allow_html=True)
     else:
         st.caption("مفيش ملفات لسه في المجلد.")
 
     st.markdown("---")
-    st.header("⚙️ System Control Panel")
+    st.markdown('<div class="section-title">⚙️ لوحة التحكم</div>', unsafe_allow_html=True)
     st.markdown(
-        f"**Instructions:**\n1. ارفعي ملفات PDF من فوق (أو حطيهم يدوي في `{PAPERS_DIR}/`).\n"
-        "2. شغّلي الـ ingestion pipeline تحت."
+        "**خطوات التشغيل:**\n\n"
+        "1️⃣ ارفعي ملفات PDF من الأعلى.\n\n"
+        "2️⃣ دوسي على زرار تشغيل الفهرسة تحت."
     )
 
-    if st.button("🔄 Execute Ingestion Pipeline", use_container_width=True):
+    if st.button("🔄 تشغيل الفهرسة (Ingestion Pipeline)", use_container_width=True):
         execute_vector_ingestion()
         st.rerun()
 
     st.markdown("---")
-    st.markdown("### 📊 Infrastructure Specifications:")
+    st.markdown('<div class="section-title">📊 مواصفات البنية التقنية</div>', unsafe_allow_html=True)
     st.info(
-        "• DL Intent Engine: **LSTM (Keras Backend)**\n"
-        "• Vector DB Hub: **ChromaDB Target**\n"
-        "• Embedding Model: **All-MiniLM-L6-v2 (HuggingFace)**\n"
-        "• Core Generative LLM: **Qwen2.5-7B-Instruct (HuggingFace Inference Providers)**"
+        "• محرك التصنيف: **LSTM (Keras)**\n"
+        "• قاعدة المتجهات: **ChromaDB**\n"
+        "• نموذج الـ Embeddings: **All-MiniLM-L6-v2**\n"
+        "• نموذج التوليد: **Qwen2.5-7B-Instruct**"
     )
 
     st.markdown("---")
@@ -329,25 +485,27 @@ with stat_col1:
     st.markdown(
         f"""
         <div class="metric-card">
+            <div class="metric-icon metric-icon-indigo">📄</div>
             <div class="metric-value">{len(get_indexed_pdf_files())}</div>
-            <div class="metric-label">📄 ملفات مرفوعة</div>
+            <div class="metric-label">ملفات مرفوعة</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
 with stat_col2:
-    chunk_count = "—"
+    chunk_count = 0
     if vector_db is not None:
         try:
             chunk_count = vector_db._collection.count()
         except Exception:
-            chunk_count = "—"
+            chunk_count = 0
     st.markdown(
         f"""
         <div class="metric-card">
+            <div class="metric-icon metric-icon-cyan">🧩</div>
             <div class="metric-value">{chunk_count}</div>
-            <div class="metric-label">🧩 Chunks مفهرسة</div>
+            <div class="metric-label">Chunks مفهرسة</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -355,24 +513,50 @@ with stat_col2:
 
 with stat_col3:
     db_status_html = (
-        '<span class="status-pill status-ok">🟢 قاعدة البيانات جاهزة</span>'
+        '<span class="status-pill status-ok">🟢 جاهزة</span>'
         if vector_db is not None
-        else '<span class="status-pill status-bad">🔴 لسه مفيش فهرسة</span>'
+        else '<span class="status-pill status-bad">🔴 مش مفهرسة</span>'
     )
     st.markdown(
         f"""
         <div class="metric-card">
-            <div style="margin-top:8px;">{db_status_html}</div>
-            <div class="metric-label" style="margin-top:8px;">حالة الـ Vector DB</div>
+            <div class="metric-icon metric-icon-amber">🗂️</div>
+            <div style="margin-bottom:4px;">{db_status_html}</div>
+            <div class="metric-label">حالة قاعدة المتجهات</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-st.markdown("<br>", unsafe_allow_html=True)
+st.markdown("<div style='height:22px;'></div>", unsafe_allow_html=True)
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
+
+# ============================== حالة البداية (لو لسه مفيش محادثة) ============================== #
+if not st.session_state.chat_history:
+    if vector_db is not None:
+        st.markdown(
+            """
+            <div class="empty-state">
+                <div class="empty-icon">💬</div>
+                <h3>جاهزة تبدئي؟</h3>
+                <p>اكتبي سؤالك البحثي أو الصقي abstract في مربع المحادثة تحت، وهيتصنف تلقائيًا ويترد عليه بالاعتماد على مستنداتك.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            """
+            <div class="empty-state">
+                <div class="empty-icon">📥</div>
+                <h3>ابدئي برفع مستنداتك</h3>
+                <p>ارفعي ملفات PDF من الشريط الجانبي، وبعدين دوسي "تشغيل الفهرسة" عشان تقدري تسأليني عنها.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 # ============================== عرض سجل المحادثة ============================== #
 for entry in st.session_state.chat_history:
