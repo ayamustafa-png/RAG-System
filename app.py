@@ -9,6 +9,7 @@ except ImportError:
 
 import os
 import json
+import time
 import numpy as np
 import streamlit as st
 import tensorflow as tf
@@ -34,11 +35,119 @@ MAX_SEQUENCE_LENGTH = 200
 if not os.path.exists(PAPERS_DIR):
     os.makedirs(PAPERS_DIR)
 
-st.set_page_config(page_title="Smart Academic Assistant", layout="wide")
-st.title("📚 Smart Academic Research Assistant (Hybrid RAG + DL Framework)")
-st.write(
-    "An enterprise-grade orchestration combining a Deep Learning Intent Classifier "
-    "with a Local Vector DB RAG pipeline."
+st.set_page_config(
+    page_title="Smart Academic Assistant",
+    page_icon="📚",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+# ============================== CSS مخصص ============================== #
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+
+    html, body, [class*="css"]  {
+        font-family: 'Cairo', sans-serif;
+    }
+
+    .main-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 22px 28px;
+        border-radius: 18px;
+        background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
+        box-shadow: 0 8px 30px rgba(37, 99, 235, 0.25);
+        margin-bottom: 20px;
+    }
+    .main-header .icon-badge {
+        font-size: 38px;
+        background: rgba(255,255,255,0.18);
+        border-radius: 14px;
+        padding: 8px 14px;
+    }
+    .main-header h1 {
+        color: white;
+        margin: 0;
+        font-size: 24px;
+        font-weight: 800;
+    }
+    .main-header p {
+        color: rgba(255,255,255,0.9);
+        margin: 4px 0 0 0;
+        font-size: 14px;
+    }
+
+    .metric-card {
+        background: #f8f9fc;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 16px 18px;
+        text-align: center;
+    }
+    .metric-card .metric-value {
+        font-size: 26px;
+        font-weight: 800;
+        color: #2563EB;
+    }
+    .metric-card .metric-label {
+        font-size: 12px;
+        color: #6b7280;
+        margin-top: 2px;
+    }
+
+    .source-card {
+        background: #f8f9fc;
+        border-right: 3px solid #7C3AED;
+        border-radius: 10px;
+        padding: 10px 14px;
+        margin-bottom: 8px;
+        font-size: 13px;
+    }
+    .source-card .source-title {
+        color: #7C3AED;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .status-pill {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+    .status-ok { background: rgba(16, 185, 129, 0.12); color: #059669; }
+    .status-bad { background: rgba(239, 68, 68, 0.12); color: #dc2626; }
+
+    .file-chip {
+        display: inline-block;
+        background: #eef2ff;
+        color: #4338ca;
+        border-radius: 8px;
+        padding: 4px 10px;
+        font-size: 12px;
+        margin: 2px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# ============================== الهيدر ============================== #
+st.markdown(
+    """
+    <div class="main-header">
+        <div class="icon-badge">📚</div>
+        <div>
+            <h1>Smart Academic Research Assistant</h1>
+            <p>Hybrid RAG + Deep Learning Framework — تصنيف ذكي للأبحاث + إجابة بالاعتماد على مستنداتك</p>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 
 
@@ -145,15 +254,52 @@ def execute_vector_ingestion():
         return vector_store
 
 
-# --- 4. Sidebar Controller Dashboard ---
+# --- 4. Sidebar: File Upload + Control Panel ---
+def get_indexed_pdf_files():
+    if not os.path.exists(PAPERS_DIR):
+        return []
+    return sorted(f for f in os.listdir(PAPERS_DIR) if f.lower().endswith(".pdf"))
+
+
 with st.sidebar:
-    st.header("⚙️ System Control Panel")
-    st.markdown(
-        f"**Instructions:**\n1. Populate `{PAPERS_DIR}/` with source PDF documents.\n"
-        "2. Trigger the ingestion pipeline below."
+    st.markdown("### 📤 رفع مستندات جديدة")
+
+    uploaded_files = st.file_uploader(
+        "ارفعي ملف أو أكتر بصيغة PDF",
+        type=["pdf"],
+        accept_multiple_files=True,
+        key="pdf_uploader",
     )
 
-    if st.button("🔄 Execute Ingestion Pipeline"):
+    if uploaded_files:
+        new_files_saved = 0
+        for uploaded_file in uploaded_files:
+            destination_path = os.path.join(PAPERS_DIR, uploaded_file.name)
+            # منتكتبش الملف تاني لو موجود أصلاً بنفس الاسم ومحفوظ قبل كده
+            if not os.path.exists(destination_path):
+                with open(destination_path, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
+                new_files_saved += 1
+
+        if new_files_saved:
+            st.success(f"✅ اتحفظ {new_files_saved} ملف جديد في '{PAPERS_DIR}/'.")
+
+    current_files = get_indexed_pdf_files()
+    if current_files:
+        st.caption(f"📄 {len(current_files)} ملف جاهز للفهرسة:")
+        chips_html = "".join(f'<span class="file-chip">{f}</span>' for f in current_files)
+        st.markdown(chips_html, unsafe_allow_html=True)
+    else:
+        st.caption("مفيش ملفات لسه في المجلد.")
+
+    st.markdown("---")
+    st.header("⚙️ System Control Panel")
+    st.markdown(
+        f"**Instructions:**\n1. ارفعي ملفات PDF من فوق (أو حطيهم يدوي في `{PAPERS_DIR}/`).\n"
+        "2. شغّلي الـ ingestion pipeline تحت."
+    )
+
+    if st.button("🔄 Execute Ingestion Pipeline", use_container_width=True):
         execute_vector_ingestion()
         st.rerun()
 
@@ -166,15 +312,106 @@ with st.sidebar:
         "• Core Generative LLM: **Qwen2.5-7B-Instruct (HuggingFace Inference Providers)**"
     )
 
+    st.markdown("---")
+    if st.button("🗑️ مسح سجل المحادثة", use_container_width=True):
+        st.session_state.chat_history = []
+        st.rerun()
+
 # Initialize Vector DB link if data exists
 vector_db = None
 if os.path.exists(DB_DIR) and len(os.listdir(DB_DIR)) > 0:
     vector_db = Chroma(persist_directory=DB_DIR, embedding_function=embeddings)
 
+# ============================== لوحة الإحصائيات ============================== #
+stat_col1, stat_col2, stat_col3 = st.columns(3)
+
+with stat_col1:
+    st.markdown(
+        f"""
+        <div class="metric-card">
+            <div class="metric-value">{len(get_indexed_pdf_files())}</div>
+            <div class="metric-label">📄 ملفات مرفوعة</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+with stat_col2:
+    chunk_count = "—"
+    if vector_db is not None:
+        try:
+            chunk_count = vector_db._collection.count()
+        except Exception:
+            chunk_count = "—"
+    st.markdown(
+        f"""
+        <div class="metric-card">
+            <div class="metric-value">{chunk_count}</div>
+            <div class="metric-label">🧩 Chunks مفهرسة</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+with stat_col3:
+    db_status_html = (
+        '<span class="status-pill status-ok">🟢 قاعدة البيانات جاهزة</span>'
+        if vector_db is not None
+        else '<span class="status-pill status-bad">🔴 لسه مفيش فهرسة</span>'
+    )
+    st.markdown(
+        f"""
+        <div class="metric-card">
+            <div style="margin-top:8px;">{db_status_html}</div>
+            <div class="metric-label" style="margin-top:8px;">حالة الـ Vector DB</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+# ============================== عرض سجل المحادثة ============================== #
+for entry in st.session_state.chat_history:
+    with st.chat_message("user", avatar="🧑‍💻"):
+        st.markdown(entry["query"])
+
+    with st.chat_message("assistant", avatar="📚"):
+        metric_col1, metric_col2 = st.columns(2)
+        with metric_col1:
+            st.metric(label="Predicted Academic Domain (DL Inference)", value=entry["predicted_class"].upper())
+        with metric_col2:
+            st.metric(label="Classifier Confidence Level", value=f"{entry['confidence']:.2f}%")
+
+        if entry.get("answer"):
+            st.write(entry["answer"])
+            if entry.get("sources"):
+                with st.expander(f"📄 المصادر المستخدمة ({len(entry['sources'])})"):
+                    for i, src in enumerate(entry["sources"]):
+                        st.markdown(
+                            f"""
+                            <div class="source-card">
+                                <div class="source-title">📄 {src['file']} — صفحة {src['page']}</div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                        st.info(src["content"])
+        elif entry.get("warning"):
+            st.warning(entry["warning"])
+        elif entry.get("error"):
+            st.error(entry["error"])
+
 # --- 5. Query Processing & Multi-Model Inference Logic ---
-user_query = st.text_input("Input your research question or paste a manuscript abstract here:")
+user_query = st.chat_input("اسألي سؤال بحثي أو الصقي abstract هنا...")
 
 if user_query:
+    with st.chat_message("user", avatar="🧑‍💻"):
+        st.markdown(user_query)
+
     # Execution Path A: Deep Learning Structural Intent Classification
     sequence = tokenizer.texts_to_sequences([user_query])
     padded_sequence = pad_sequences(
@@ -185,63 +422,88 @@ if user_query:
     predicted_class = TOP_CATEGORIES[np.argmax(prediction)]
     confidence_score = np.max(prediction) * 100
 
-    st.markdown("### 📊 Deep Learning Text Classifier Analytics:")
-    metric_col1, metric_col2 = st.columns(2)
-    with metric_col1:
-        st.metric(label="Predicted Academic Domain (DL Inference)", value=predicted_class.upper())
-    with metric_col2:
-        st.metric(label="Classifier Confidence Level", value=f"{confidence_score:.2f}%")
+    entry = {
+        "query": user_query,
+        "predicted_class": predicted_class,
+        "confidence": confidence_score,
+    }
 
-    st.markdown("---")
+    with st.chat_message("assistant", avatar="📚"):
+        metric_col1, metric_col2 = st.columns(2)
+        with metric_col1:
+            st.metric(label="Predicted Academic Domain (DL Inference)", value=predicted_class.upper())
+        with metric_col2:
+            st.metric(label="Classifier Confidence Level", value=f"{confidence_score:.2f}%")
 
-    # Execution Path B: Vector Search Retrieval and Contextual Generation
-    if vector_db:
-        retriever_node = vector_db.as_retriever(search_kwargs={"k": 4})
+        # Execution Path B: Vector Search Retrieval and Contextual Generation
+        if vector_db:
+            retriever_node = vector_db.as_retriever(search_kwargs={"k": 4})
 
-        system_instructions = (
-            "You are a highly analytical academic research assistant. Formulate an authoritative, objective reply "
-            "based strictly on the provided context. Maintain academic integrity. If the answer cannot be confidently "
-            "inferred from the retrieved data, explicitly respond with: 'The requested information is not available "
-            "within the ingested references.' and do not extrapolate or hallucinate.\n\n"
-            "Retrieved References Context:\n{context}"
-        )
-        prompt_template = ChatPromptTemplate.from_messages(
-            [
-                ("system", system_instructions),
-                ("human", "{input}"),
-            ]
-        )
+            system_instructions = (
+                "You are a highly analytical academic research assistant. Formulate an authoritative, objective reply "
+                "based strictly on the provided context. Maintain academic integrity. If the answer cannot be confidently "
+                "inferred from the retrieved data, explicitly respond with: 'The requested information is not available "
+                "within the ingested references.' and do not extrapolate or hallucinate.\n\n"
+                "Retrieved References Context:\n{context}"
+            )
+            prompt_template = ChatPromptTemplate.from_messages(
+                [
+                    ("system", system_instructions),
+                    ("human", "{input}"),
+                ]
+            )
 
-        question_answer_chain = create_stuff_documents_chain(llm, prompt_template)
-        rag_orchestration_chain = create_retrieval_chain(retriever_node, question_answer_chain)
+            question_answer_chain = create_stuff_documents_chain(llm, prompt_template)
+            rag_orchestration_chain = create_retrieval_chain(retriever_node, question_answer_chain)
 
-        with st.spinner("Retrieving local semantic knowledge and generating structural response..."):
-            try:
-                execution_response = rag_orchestration_chain.invoke({"input": user_query})
+            with st.spinner("Retrieving local semantic knowledge and generating structural response..."):
+                try:
+                    start_time = time.time()
+                    execution_response = rag_orchestration_chain.invoke({"input": user_query})
+                    elapsed = time.time() - start_time
 
-                st.subheader("✍️ Generated Synthesized Response:")
-                st.write(execution_response["answer"])
+                    answer_text = execution_response["answer"]
+                    st.write(answer_text)
+                    st.caption(f"⏱️ {elapsed:.2f} ثانية")
 
-                with st.expander("📄 Verifiable Source Citations and Extracted Context:"):
-                    for index, document in enumerate(execution_response["context"]):
-                        file_origin = os.path.basename(
-                            document.metadata.get("source", "Unknown_Reference.pdf")
-                        )
-                        page_location = document.metadata.get("page", "N/A")
-                        st.markdown(
-                            f"**Source Document [{index + 1}]:** {file_origin} — "
-                            f"(Page Reference: {page_location})"
-                        )
-                        st.info(document.page_content)
-            except Exception as e:
-                st.error(
-                    f"حصل خطأ أثناء توليد الإجابة من الـ LLM: {e}\n\n"
-                    "لو الرسالة بتقول إن الموديل مش متاح (not supported / 404)، غيّري "
-                    "قيمة `repo_id` في app.py لموديل تاني متاح دلوقتي على "
-                    "https://huggingface.co/models?inference_provider=all&pipeline_tag=text-generation"
-                )
-    else:
-        st.warning(
-            "System Notice: RAG pipeline is offline. Populate the target folder and execute "
-            "the Vector Ingestion pipeline in the Control Panel."
-        )
+                    sources = []
+                    for document in execution_response["context"]:
+                        sources.append({
+                            "file": os.path.basename(document.metadata.get("source", "Unknown_Reference.pdf")),
+                            "page": document.metadata.get("page", "N/A"),
+                            "content": document.page_content,
+                        })
+
+                    if sources:
+                        with st.expander(f"📄 المصادر المستخدمة ({len(sources)})"):
+                            for src in sources:
+                                st.markdown(
+                                    f"""
+                                    <div class="source-card">
+                                        <div class="source-title">📄 {src['file']} — صفحة {src['page']}</div>
+                                    </div>
+                                    """,
+                                    unsafe_allow_html=True,
+                                )
+                                st.info(src["content"])
+
+                    entry["answer"] = answer_text
+                    entry["sources"] = sources
+                except Exception as e:
+                    error_message = (
+                        f"حصل خطأ أثناء توليد الإجابة من الـ LLM: {e}\n\n"
+                        "لو الرسالة بتقول إن الموديل مش متاح (not supported / 404)، غيّري "
+                        "قيمة `repo_id` في app.py لموديل تاني متاح دلوقتي على "
+                        "https://huggingface.co/models?inference_provider=all&pipeline_tag=text-generation"
+                    )
+                    st.error(error_message)
+                    entry["error"] = error_message
+        else:
+            warning_message = (
+                "System Notice: RAG pipeline is offline. ارفعي ملفات PDF من الشريط الجانبي وشغّلي "
+                "الـ Ingestion Pipeline الأول."
+            )
+            st.warning(warning_message)
+            entry["warning"] = warning_message
+
+    st.session_state.chat_history.append(entry)
