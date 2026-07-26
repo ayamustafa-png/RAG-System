@@ -9,6 +9,7 @@ except ImportError:
 
 import os
 import time
+import math
 import importlib
 from datetime import datetime
 
@@ -47,232 +48,314 @@ CATEGORY_LABELS = {
     "physics": "Physics",
     "astro-ph": "Astrophysics",
 }
+CATEGORY_COLORS = {
+    "cs": "#38BDF8",
+    "math": "#A78BFA",
+    "physics": "#FBBF24",
+    "astro-ph": "#F472B6",
+}
 NOT_AVAILABLE_PHRASE = "not available"
+
+PAGES = [
+    ("🛰️", "Mission Control"),
+    ("🗃️", "Archive"),
+    ("📡", "Signal Analytics"),
+    ("🎯", "Precision Metrics"),
+    ("🧬", "Domain Scanner"),
+]
 
 # ============================================================================
 # 1. PAGE CONFIG
 # ============================================================================
 st.set_page_config(
-    page_title="Smart Academic Research Assistant",
-    page_icon="📚",
+    page_title="Smart Academic Research Assistant — Mission Control",
+    page_icon="🛰️",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 # ============================================================================
-# 2. GLOBAL STYLE
+# 2. GLOBAL STYLE — "Mission Control" theme
 # ============================================================================
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
     html, body, [class*="css"] {
-        font-family: 'Inter', sans-serif;
+        font-family: 'JetBrains Mono', monospace;
+    }
+    h1, h2, h3, h4 {
+        font-family: 'Space Grotesk', sans-serif !important;
     }
 
     :root {
-        --navy-900: #0B1220;
-        --blue-900: #0F2557;
-        --blue-800: #123A85;
-        --blue-700: #1D4ED8;
-        --blue-600: #2563EB;
-        --blue-500: #3B82F6;
-        --blue-300: #93C5FD;
-        --blue-100: #DBEAFE;
-        --bg: #F3F6FC;
-        --surface: #FFFFFF;
-        --border: #E2E8F5;
-        --text-main: #0F172A;
-        --text-soft: #64748B;
-        --success: #16A34A;
-        --danger: #DC2626;
-        --warning: #D97706;
+        --cyan: #38BDF8;
+        --violet: #A78BFA;
+        --amber: #FBBF24;
+        --pink: #F472B6;
+        --ink: #060A14;
+        --panel: rgba(255,255,255,0.04);
+        --panel-border: rgba(255,255,255,0.09);
+        --text-main: #E7ECFB;
+        --text-soft: #8B95B3;
+        --success: #34D399;
+        --danger: #FB7185;
     }
 
     .stApp {
-        background: var(--bg);
+        background:
+            radial-gradient(1.5px 1.5px at 8% 15%, rgba(255,255,255,0.55), transparent),
+            radial-gradient(1.5px 1.5px at 22% 65%, rgba(255,255,255,0.4), transparent),
+            radial-gradient(1px 1px at 38% 28%, rgba(255,255,255,0.5), transparent),
+            radial-gradient(1.5px 1.5px at 54% 80%, rgba(255,255,255,0.35), transparent),
+            radial-gradient(1px 1px at 68% 12%, rgba(255,255,255,0.5), transparent),
+            radial-gradient(1.5px 1.5px at 83% 55%, rgba(255,255,255,0.4), transparent),
+            radial-gradient(1px 1px at 93% 35%, rgba(255,255,255,0.45), transparent),
+            radial-gradient(1.5px 1.5px at 12% 90%, rgba(255,255,255,0.3), transparent),
+            radial-gradient(1px 1px at 47% 47%, rgba(255,255,255,0.35), transparent),
+            radial-gradient(1.5px 1.5px at 74% 88%, rgba(255,255,255,0.3), transparent),
+            linear-gradient(160deg, #060A14 0%, #0A1128 45%, #0B1735 100%);
+        background-attachment: fixed;
     }
 
     h1, h2, h3, h4, p, span, label, div {
         color: var(--text-main);
     }
 
-    /* ===== Hero header ===== */
-    .hero {
+    section[data-testid="stSidebar"] {
+        background: #060A14;
+        border-right: 1px solid var(--panel-border);
+    }
+    section[data-testid="stSidebar"] * { color: var(--text-main) !important; }
+
+    /* ===== HUD hero strip ===== */
+    .hud {
         position: relative;
         overflow: hidden;
+        border-radius: 20px;
+        padding: 28px 34px;
+        margin-bottom: 20px;
+        background: linear-gradient(115deg, rgba(56,189,248,0.10) 0%, rgba(167,139,250,0.10) 50%, rgba(244,114,182,0.08) 100%);
+        border: 1px solid var(--panel-border);
+    }
+    .hud::before {
+        content: "";
+        position: absolute; inset: 0;
+        background: repeating-linear-gradient(90deg, transparent, transparent 38px, rgba(255,255,255,0.025) 39px, transparent 40px);
+        pointer-events: none;
+    }
+    .hud-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        background: linear-gradient(90deg, #FFFFFF 20%, var(--cyan) 60%, var(--violet) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent !important;
+        margin: 0;
+    }
+    .hud-sub {
+        color: var(--text-soft) !important;
+        font-size: 13px;
+        margin-top: 8px;
+        line-height: 1.6;
+        max-width: 720px;
+    }
+    .hud-tags { margin-top: 14px; }
+    .hud-tag {
+        display: inline-block;
+        font-size: 10.5px;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        border: 1px solid var(--panel-border);
+        background: rgba(255,255,255,0.03);
+        color: var(--cyan) !important;
+        padding: 4px 10px;
+        border-radius: 6px;
+        margin: 3px 6px 3px 0;
+    }
+
+    /* ===== Section dividers (HUD style) ===== */
+    .section-divider {
         display: flex;
         align-items: center;
-        gap: 22px;
-        padding: 34px 38px;
-        border-radius: 22px;
-        background: linear-gradient(120deg, var(--navy-900) 0%, var(--blue-900) 45%, var(--blue-600) 100%);
-        box-shadow: 0 16px 40px rgba(15, 37, 87, 0.28);
-        margin-bottom: 26px;
+        gap: 12px;
+        margin: 26px 0 14px 0;
     }
-    .hero::after {
+    .section-divider span {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11.5px;
+        letter-spacing: 2px;
+        color: var(--cyan) !important;
+        white-space: nowrap;
+    }
+    .section-divider::after {
         content: "";
-        position: absolute;
-        top: -60px; right: -60px;
-        width: 220px; height: 220px;
-        background: radial-gradient(circle, rgba(147, 197, 253, 0.22) 0%, rgba(147, 197, 253, 0) 70%);
-        border-radius: 50%;
-    }
-    .hero .icon-badge {
-        font-size: 40px;
-        background: rgba(255,255,255,0.12);
-        border: 1px solid rgba(255,255,255,0.22);
-        border-radius: 18px;
-        padding: 14px 20px;
-        z-index: 1;
-    }
-    .hero h1 {
-        color: #FFFFFF !important;
-        margin: 0;
-        font-size: 26px;
-        font-weight: 800;
-    }
-    .hero p {
-        color: rgba(255,255,255,0.85) !important;
-        margin: 6px 0 0 0;
-        font-size: 14px;
-        line-height: 1.5;
-    }
-    .hero .hero-badges { margin-top: 12px; z-index: 1; }
-    .hero-chip {
-        display: inline-block;
-        background: rgba(255,255,255,0.14);
-        border: 1px solid rgba(255,255,255,0.25);
-        color: #FFFFFF;
-        border-radius: 999px;
-        padding: 4px 12px;
-        font-size: 11px;
-        font-weight: 600;
-        margin-right: 6px;
+        flex: 1;
+        height: 1px;
+        background: repeating-linear-gradient(90deg, var(--panel-border), var(--panel-border) 4px, transparent 4px, transparent 8px);
     }
 
-    /* ===== Page title (per-page) ===== */
-    .page-title {
-        font-size: 20px;
-        font-weight: 800;
-        color: var(--blue-900);
-        margin-bottom: 2px;
-    }
-    .page-subtitle {
-        font-size: 13.5px;
-        color: var(--text-soft);
-        margin-bottom: 20px;
-    }
-
-    /* ===== Fully-gradient metric cards ===== */
-    .metric-card {
-        border-radius: 18px;
-        padding: 20px 22px;
-        color: #FFFFFF !important;
-        box-shadow: 0 10px 24px rgba(15, 37, 87, 0.18);
-        transition: transform 0.18s ease, box-shadow 0.18s ease;
-        height: 100%;
-    }
-    .metric-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 16px 34px rgba(15, 37, 87, 0.26);
-    }
-    .metric-card * { color: #FFFFFF !important; }
-    .metric-card .metric-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 38px; height: 38px;
-        border-radius: 12px;
-        background: rgba(255,255,255,0.18);
-        font-size: 18px;
-        margin-bottom: 10px;
-    }
-    .metric-card .metric-value {
-        font-size: 28px;
-        font-weight: 800;
-        line-height: 1.1;
-    }
-    .metric-card .metric-label {
-        font-size: 12.5px;
-        opacity: 0.9;
-        margin-top: 4px;
-    }
-    .metric-card .metric-sub {
-        font-size: 11px;
-        opacity: 0.75;
-        margin-top: 8px;
-    }
-
-    .grad-deep   { background: linear-gradient(135deg, var(--navy-900) 0%, var(--blue-800) 100%); }
-    .grad-mid    { background: linear-gradient(135deg, var(--blue-900) 0%, var(--blue-600) 100%); }
-    .grad-bright { background: linear-gradient(135deg, var(--blue-700) 0%, var(--blue-300) 100%); }
-    .grad-soft   { background: linear-gradient(135deg, var(--blue-600) 0%, var(--blue-300) 100%); }
-
-    /* ===== Panels / sections ===== */
-    .panel {
-        background: var(--surface);
-        border: 1px solid var(--border);
+    /* ===== Glass panels ===== */
+    .glass {
+        background: var(--panel);
+        border: 1px solid var(--panel-border);
         border-radius: 18px;
         padding: 22px 24px;
-        box-shadow: 0 6px 18px rgba(15, 37, 87, 0.05);
+        backdrop-filter: blur(10px);
     }
 
-    /* ===== Source / detail cards ===== */
-    .source-card {
-        background: var(--blue-100);
-        border-left: 3px solid var(--blue-600);
-        border-radius: 10px;
+    /* ===== Stat pods ===== */
+    .pod {
+        position: relative;
+        border-radius: 16px;
+        padding: 18px 20px;
+        border: 1px solid var(--panel-border);
+        background: linear-gradient(160deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+        height: 100%;
+        overflow: hidden;
+    }
+    .pod::before {
+        content: "";
+        position: absolute; top: 0; left: 0; bottom: 0;
+        width: 3px;
+    }
+    .pod-cyan::before   { background: var(--cyan); box-shadow: 0 0 12px var(--cyan); }
+    .pod-violet::before { background: var(--violet); box-shadow: 0 0 12px var(--violet); }
+    .pod-amber::before  { background: var(--amber); box-shadow: 0 0 12px var(--amber); }
+    .pod-pink::before   { background: var(--pink); box-shadow: 0 0 12px var(--pink); }
+    .pod-value {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 26px;
+        font-weight: 700;
+        color: #FFFFFF !important;
+    }
+    .pod-label {
+        font-size: 11px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: var(--text-soft) !important;
+        margin-top: 4px;
+    }
+    .pod-sub {
+        font-size: 10.5px;
+        color: var(--text-soft) !important;
+        margin-top: 6px;
+        opacity: 0.8;
+    }
+
+    /* ===== Signal bars (custom horizontal chart) ===== */
+    .signal-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .signal-label {
+        width: 150px;
+        font-size: 11.5px;
+        color: var(--text-soft) !important;
+        flex-shrink: 0;
+    }
+    .signal-track {
+        flex: 1;
+        height: 10px;
+        border-radius: 6px;
+        background: rgba(255,255,255,0.06);
+        overflow: hidden;
+    }
+    .signal-fill {
+        height: 100%;
+        border-radius: 6px;
+    }
+    .signal-value {
+        width: 52px;
+        text-align: right;
+        font-size: 11.5px;
+        color: #FFFFFF !important;
+        flex-shrink: 0;
+    }
+
+    /* ===== Terminal log rows ===== */
+    .term-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 8px 10px;
+        border-radius: 8px;
+        font-size: 12px;
+        margin-bottom: 4px;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.04);
+    }
+    .term-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        margin-top: 4px;
+        flex-shrink: 0;
+    }
+    .dot-ok { background: var(--success); box-shadow: 0 0 6px var(--success); }
+    .dot-bad { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+    .dot-neutral { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+    .term-time {
+        color: var(--text-soft) !important;
+        width: 68px;
+        flex-shrink: 0;
+    }
+    .term-text { color: var(--text-main) !important; flex: 1; }
+    .term-badge {
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 5px;
+        background: rgba(255,255,255,0.06);
+        color: var(--cyan) !important;
+        flex-shrink: 0;
+    }
+
+    /* ===== File cartridge chips ===== */
+    .cartridge {
+        display: inline-flex;
+        flex-direction: column;
+        gap: 2px;
+        border: 1px solid var(--panel-border);
+        background: linear-gradient(160deg, rgba(56,189,248,0.08), rgba(255,255,255,0.02));
+        border-radius: 12px;
         padding: 10px 14px;
-        margin-bottom: 8px;
-        font-size: 13px;
-        color: var(--blue-900) !important;
+        margin: 4px;
+        min-width: 190px;
     }
-    .source-card * { color: var(--blue-900) !important; }
-    .source-card .source-title { font-weight: 700; margin-bottom: 4px; }
+    .cartridge .c-name { font-size: 11.5px; color: var(--text-main) !important; }
+    .cartridge .c-meta { font-size: 10px; color: var(--text-soft) !important; }
 
-    .file-chip {
+    /* ===== Status readout ===== */
+    .readout {
         display: inline-flex;
         align-items: center;
-        gap: 5px;
-        background: linear-gradient(120deg, var(--blue-100), #EFF6FF);
-        border: 1px solid var(--blue-300);
-        color: var(--blue-900);
-        border-radius: 10px;
-        padding: 6px 12px;
-        font-size: 12px;
-        font-weight: 600;
-        margin: 3px;
-    }
-
-    .status-pill {
-        display: inline-block;
-        padding: 4px 12px;
+        gap: 8px;
+        font-size: 11.5px;
+        letter-spacing: 0.4px;
+        padding: 6px 14px;
         border-radius: 999px;
-        font-size: 12px;
-        font-weight: 700;
+        border: 1px solid var(--panel-border);
+        background: rgba(255,255,255,0.03);
     }
-    .status-ok { background: rgba(22, 163, 74, 0.12); color: var(--success); }
-    .status-bad { background: rgba(220, 38, 38, 0.12); color: var(--danger); }
+    .readout .rdot { width: 8px; height: 8px; border-radius: 50%; }
 
-    /* ===== Sidebar ===== */
-    section[data-testid="stSidebar"] {
-        background: #FFFFFF;
-        border-right: 1px solid var(--border);
+    /* ===== Nav buttons ===== */
+    div[data-testid="stButton"] button {
+        border-radius: 10px !important;
+        border: 1px solid var(--panel-border) !important;
+        font-family: 'JetBrains Mono', monospace !important;
+        font-size: 12.5px !important;
     }
 
-    /* ===== Tabs ===== */
-    .stTabs [data-baseweb="tab-list"] { gap: 6px; }
-    .stTabs [data-baseweb="tab"] {
-        background: var(--blue-100);
-        border-radius: 10px 10px 0 0;
-        padding: 8px 18px;
-        color: var(--blue-900);
-    }
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, var(--blue-900), var(--blue-600)) !important;
-        color: #FFFFFF !important;
+    /* Chat bubbles */
+    div[data-testid="stChatMessage"] {
+        background: var(--panel) !important;
+        border: 1px solid var(--panel-border) !important;
+        border-radius: 14px !important;
     }
     </style>
     """,
@@ -280,46 +363,119 @@ st.markdown(
 )
 
 
-def render_hero(title, subtitle, chips=None):
-    chips_html = ""
-    if chips:
-        chips_html = "<div class='hero-badges'>" + "".join(
-            f"<span class='hero-chip'>{c}</span>" for c in chips
-        ) + "</div>"
-
+# ============================================================================
+# SMALL RENDER HELPERS (custom SVG / HTML — no default chart widgets)
+# ============================================================================
+def render_hud(tags=None):
+    tags_html = ""
+    if tags:
+        tags_html = "<div class='hud-tags'>" + "".join(f"<span class='hud-tag'>{t}</span>" for t in tags) + "</div>"
     st.markdown(
         f"""
-        <div class="hero">
-            <div class="icon-badge">📚</div>
-            <div>
-                <h1>{title}</h1>
-                <p>{subtitle}</p>
-                {chips_html}
-            </div>
+        <div class="hud">
+            <div class="hud-title">🛰️ Smart Academic Research Assistant</div>
+            <div class="hud-sub">Hybrid deep-learning classification + retrieval-augmented generation,
+            running live against your own indexed research papers.</div>
+            {tags_html}
         </div>
         """,
         unsafe_allow_html=True,
     )
 
 
-def render_page_title(title, subtitle):
-    st.markdown(f'<div class="page-title">{title}</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="page-subtitle">{subtitle}</div>', unsafe_allow_html=True)
+def render_section(title):
+    st.markdown(f'<div class="section-divider"><span>⟨ {title.upper()} ⟩</span></div>', unsafe_allow_html=True)
 
 
-def metric_card(column, value, label, icon, gradient="grad-mid", sub=None):
-    sub_html = f'<div class="metric-sub">{sub}</div>' if sub else ""
+def pod(column, value, label, accent="cyan", sub=None):
+    sub_html = f'<div class="pod-sub">{sub}</div>' if sub else ""
     column.markdown(
         f"""
-        <div class="metric-card {gradient}">
-            <div class="metric-icon">{icon}</div>
-            <div class="metric-value">{value}</div>
-            <div class="metric-label">{label}</div>
+        <div class="pod pod-{accent}">
+            <div class="pod-value">{value}</div>
+            <div class="pod-label">{label}</div>
             {sub_html}
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+
+def svg_gauge(percentage, label="", color="#38BDF8", size=150):
+    percentage = max(0, min(100, percentage))
+    radius = 52
+    circumference = 2 * math.pi * radius
+    offset = circumference * (1 - percentage / 100)
+    return f"""
+    <svg width="{size}" height="{size}" viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="{radius}" stroke="rgba(255,255,255,0.08)" stroke-width="9" fill="none"/>
+      <circle cx="60" cy="60" r="{radius}" stroke="{color}" stroke-width="9" fill="none"
+        stroke-dasharray="{circumference:.2f}" stroke-dashoffset="{offset:.2f}" stroke-linecap="round"
+        transform="rotate(-90 60 60)" style="filter: drop-shadow(0 0 6px {color});"/>
+      <text x="60" y="56" text-anchor="middle" font-family="Space Grotesk, sans-serif"
+        font-size="22" font-weight="700" fill="#FFFFFF">{percentage:.0f}%</text>
+      <text x="60" y="76" text-anchor="middle" font-family="JetBrains Mono, monospace"
+        font-size="9" fill="rgba(231,236,251,0.65)">{label}</text>
+    </svg>
+    """
+
+
+def signal_bars(items):
+    """items: list of (label, value 0-100, color)"""
+    rows = ""
+    for label, value, color in items:
+        width = max(2, min(100, value))
+        rows += f"""
+        <div class="signal-row">
+            <div class="signal-label">{label}</div>
+            <div class="signal-track">
+                <div class="signal-fill" style="width:{width}%; background: linear-gradient(90deg, {color}55, {color});"></div>
+            </div>
+            <div class="signal-value">{value:.1f}%</div>
+        </div>
+        """
+    st.markdown(rows, unsafe_allow_html=True)
+
+
+def sparkline(values, color="#38BDF8", width=560, height=90):
+    if not values:
+        return ""
+    n = len(values)
+    vmax = max(values) if max(values) > 0 else 1
+    vmin = min(values)
+    span = (vmax - vmin) or 1
+    step = width / max(1, n - 1)
+    points = []
+    for i, v in enumerate(values):
+        x = i * step
+        y = height - ((v - vmin) / span) * (height - 20) - 10
+        points.append(f"{x:.1f},{y:.1f}")
+    path = " ".join(points)
+    dots = "".join(
+        f'<circle cx="{p.split(",")[0]}" cy="{p.split(",")[1]}" r="3" fill="{color}"/>' for p in points
+    )
+    return f"""
+    <svg width="{width}" height="{height}" viewBox="0 0 {width} {height}">
+        <polyline points="{path}" fill="none" stroke="{color}" stroke-width="2.5"
+          style="filter: drop-shadow(0 0 4px {color});"/>
+        {dots}
+    </svg>
+    """
+
+
+def render_terminal_log(rows):
+    """rows: list of dicts with keys: dot ('ok'|'bad'|'neutral'), time, text, badge"""
+    html = ""
+    for r in rows:
+        html += f"""
+        <div class="term-row">
+            <div class="term-dot dot-{r['dot']}"></div>
+            <div class="term-time">{r['time']}</div>
+            <div class="term-text">{r['text']}</div>
+            <div class="term-badge">{r['badge']}</div>
+        </div>
+        """
+    st.markdown(html, unsafe_allow_html=True)
 
 
 # ============================================================================
@@ -347,7 +503,7 @@ def _build_classifier_architecture():
     )
 
 
-@st.cache_resource(show_spinner="Loading models and services...")
+@st.cache_resource(show_spinner="Booting mission systems...")
 def initialize_system_resources():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     model_file = os.path.join(base_dir, MODEL_PATH)
@@ -472,23 +628,19 @@ if "chat_history" not in st.session_state:
 if "classification_log" not in st.session_state:
     st.session_state.classification_log = []
 
+if "active_page" not in st.session_state:
+    st.session_state.active_page = "Mission Control"
+
 
 # ============================================================================
-# 6. SIDEBAR — NAVIGATION + FILE UPLOAD + CONTROL PANEL
+# 6. SIDEBAR — CONTROL DECK
 # ============================================================================
 with st.sidebar:
-    st.markdown("### 🧭 Navigation")
-    page = st.radio(
-        "Go to",
-        ["🏠 Home", "📁 Documents", "📊 Analytics", "🎯 Answer Accuracy", "🧠 Classification"],
-        label_visibility="collapsed",
-    )
-
-    st.markdown("---")
-    st.markdown("### 📤 Upload New Documents")
+    st.markdown("### 🛠️ Control Deck")
+    st.caption("Document intake & indexing operations.")
 
     uploaded_files = st.file_uploader(
-        "Upload one or more PDF files",
+        "Upload PDF file(s)",
         type=["pdf"],
         accept_multiple_files=True,
         key="pdf_uploader",
@@ -502,46 +654,32 @@ with st.sidebar:
                 with open(destination_path, "wb") as f:
                     f.write(uploaded_file.getbuffer())
                 new_files_saved += 1
-
         if new_files_saved:
-            st.success(f"✅ Saved {new_files_saved} new file(s) to '{PAPERS_DIR}/'.")
+            st.success(f"✅ {new_files_saved} file(s) saved to '{PAPERS_DIR}/'.")
 
     current_files = get_indexed_pdf_files()
-    if current_files:
-        st.caption(f"📄 {len(current_files)} file(s) ready for ingestion:")
-        chips_html = "".join(f'<span class="file-chip">📄 {f}</span>' for f in current_files)
-        st.markdown(chips_html, unsafe_allow_html=True)
-    else:
-        st.caption("No files in the folder yet.")
+    st.caption(f"📄 {len(current_files)} file(s) staged")
 
-    st.markdown("---")
-    st.markdown("### ⚙️ System Control Panel")
-    st.markdown(
-        f"**Instructions:**\n"
-        f"1. Upload PDF files above (or place them manually in `{PAPERS_DIR}/`).\n"
-        "2. Run the ingestion pipeline below."
-    )
-
-    if st.button("🔄 Execute Ingestion Pipeline", use_container_width=True):
+    if st.button("🚀 Execute Ingestion Pipeline", use_container_width=True):
         execute_vector_ingestion()
         st.rerun()
 
     st.markdown("---")
-    db_status_html = (
-        '<span class="status-pill status-ok">🟢 Vector DB Ready</span>'
-        if vector_db is not None
-        else '<span class="status-pill status-bad">🔴 Not Indexed Yet</span>'
+
+    ok = vector_db is not None
+    dot_color = "#34D399" if ok else "#FB7185"
+    status_text = "VECTOR DB ONLINE" if ok else "VECTOR DB OFFLINE"
+    st.markdown(
+        f"""<div class="readout"><span class="rdot" style="background:{dot_color}; box-shadow:0 0 6px {dot_color};"></span>{status_text}</div>""",
+        unsafe_allow_html=True,
     )
-    st.markdown(db_status_html, unsafe_allow_html=True)
 
     st.markdown("---")
-    st.markdown("### 📊 Infrastructure Specifications")
-    st.info(
-        "• DL Intent Engine: **LSTM (Keras Backend)**\n"
-        "• Vector DB: **ChromaDB**\n"
-        "• Embedding Model: **all-MiniLM-L6-v2 (HuggingFace)**\n"
-        "• Generative LLM: **Qwen2.5-7B-Instruct (HuggingFace Inference Providers)**"
-    )
+    st.markdown("**System Stack**")
+    st.caption("Classifier · LSTM (Keras)")
+    st.caption("Vector Store · ChromaDB")
+    st.caption("Embeddings · all-MiniLM-L6-v2")
+    st.caption("Generator · Qwen2.5-7B-Instruct")
 
     st.markdown("---")
     if st.button("🗑️ Clear Conversation", use_container_width=True):
@@ -550,67 +688,73 @@ with st.sidebar:
 
 
 # ============================================================================
-# 7. PAGE: HOME (main chat experience)
+# 7. TOP NAVIGATION (segmented control instead of sidebar radio)
 # ============================================================================
-def page_home():
-    render_hero(
-        "Smart Academic Research Assistant",
-        "Hybrid RAG + Deep Learning Framework — combining a domain classifier with "
-        "retrieval-augmented generation over your own research papers.",
-        chips=["LSTM Classifier", "ChromaDB", "Qwen2.5-7B", "HuggingFace Embeddings"],
-    )
+render_hud(tags=["LSTM Classifier", "ChromaDB", "Qwen2.5-7B", "HuggingFace Embeddings", "RAG"])
 
+nav_cols = st.columns(len(PAGES))
+for i, (icon, name) in enumerate(PAGES):
+    is_active = st.session_state.active_page == name
+    if nav_cols[i].button(
+        f"{icon} {name}",
+        key=f"nav_{name}",
+        use_container_width=True,
+        type="primary" if is_active else "secondary",
+    ):
+        st.session_state.active_page = name
+        st.rerun()
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+
+# ============================================================================
+# 8. PAGE: MISSION CONTROL (main chat experience)
+# ============================================================================
+def page_mission_control():
     col1, col2, col3 = st.columns(3)
-    metric_card(col1, len(get_indexed_pdf_files()), "Documents Uploaded", "📄", "grad-deep")
-    metric_card(col2, get_total_chunks(), "Chunks Indexed", "🧩", "grad-mid")
-    metric_card(
-        col3,
-        len(st.session_state.chat_history),
-        "Questions This Session",
-        "💬",
-        "grad-bright",
-    )
+    pod(col1, len(get_indexed_pdf_files()), "Documents Loaded", "cyan")
+    pod(col2, get_total_chunks(), "Vectors Indexed", "violet")
+    pod(col3, len(st.session_state.chat_history), "Transmissions This Session", "amber")
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    render_page_title("💬 Ask a Question", "Ask a research question or paste an abstract below.")
+    render_section("Live Console")
 
     for entry in st.session_state.chat_history:
-        with st.chat_message("user", avatar="🧑‍💻"):
+        with st.chat_message("user", avatar="🧑‍🚀"):
             st.markdown(entry["query"])
 
-        with st.chat_message("assistant", avatar="📚"):
-            metric_col1, metric_col2 = st.columns(2)
-            with metric_col1:
-                st.metric(
-                    label="Predicted Domain",
-                    value=CATEGORY_LABELS.get(entry["predicted_class"], entry["predicted_class"]),
+        with st.chat_message("assistant", avatar="🛰️"):
+            gauge_col, info_col = st.columns([1, 3])
+            with gauge_col:
+                st.markdown(
+                    svg_gauge(
+                        entry["confidence"],
+                        label=CATEGORY_LABELS.get(entry["predicted_class"], entry["predicted_class"]),
+                        color=CATEGORY_COLORS.get(entry["predicted_class"], "#38BDF8"),
+                        size=110,
+                    ),
+                    unsafe_allow_html=True,
                 )
-            with metric_col2:
-                st.metric(label="Classifier Confidence", value=f"{entry['confidence']:.2f}%")
+            with info_col:
+                if entry.get("answer"):
+                    st.write(entry["answer"])
+                    if entry.get("elapsed") is not None:
+                        st.caption(f"⏱ {entry['elapsed']:.2f}s response time")
+                    if entry.get("sources"):
+                        with st.expander(f"📎 Sources ({len(entry['sources'])})"):
+                            for src in entry["sources"]:
+                                st.markdown(
+                                    f"**{src['file']}** — page {src['page']}",
+                                )
+                                st.caption(src["content"][:400])
+                elif entry.get("warning"):
+                    st.warning(entry["warning"])
+                elif entry.get("error"):
+                    st.error(entry["error"])
 
-            if entry.get("answer"):
-                st.write(entry["answer"])
-                if entry.get("sources"):
-                    with st.expander(f"📄 Sources used ({len(entry['sources'])})"):
-                        for src in entry["sources"]:
-                            st.markdown(
-                                f"""
-                                <div class="source-card">
-                                    <div class="source-title">📄 {src['file']} — page {src['page']}</div>
-                                </div>
-                                """,
-                                unsafe_allow_html=True,
-                            )
-                            st.info(src["content"])
-            elif entry.get("warning"):
-                st.warning(entry["warning"])
-            elif entry.get("error"):
-                st.error(entry["error"])
-
-    user_query = st.chat_input("Ask a research question or paste an abstract here...")
+    user_query = st.chat_input("Transmit a research question or paste an abstract...")
 
     if user_query:
-        with st.chat_message("user", avatar="🧑‍💻"):
+        with st.chat_message("user", avatar="🧑‍🚀"):
             st.markdown(user_query)
 
         classification = classify_text(user_query)
@@ -631,220 +775,198 @@ def page_home():
             "confidence": confidence_score,
         }
 
-        with st.chat_message("assistant", avatar="📚"):
-            metric_col1, metric_col2 = st.columns(2)
-            with metric_col1:
-                st.metric(
-                    label="Predicted Domain",
-                    value=CATEGORY_LABELS.get(predicted_class, predicted_class),
+        with st.chat_message("assistant", avatar="🛰️"):
+            gauge_col, info_col = st.columns([1, 3])
+            with gauge_col:
+                st.markdown(
+                    svg_gauge(
+                        confidence_score,
+                        label=CATEGORY_LABELS.get(predicted_class, predicted_class),
+                        color=CATEGORY_COLORS.get(predicted_class, "#38BDF8"),
+                        size=110,
+                    ),
+                    unsafe_allow_html=True,
                 )
-            with metric_col2:
-                st.metric(label="Classifier Confidence", value=f"{confidence_score:.2f}%")
 
-            if vector_db:
-                retriever_node = retrieval_stage.get_retriever(vector_db)
-                rag_orchestration_chain = prompting_stage.build_rag_chain(llm, retriever_node)
+            with info_col:
+                if vector_db:
+                    retriever_node = retrieval_stage.get_retriever(vector_db)
+                    rag_orchestration_chain = prompting_stage.build_rag_chain(llm, retriever_node)
 
-                with st.spinner("Retrieving relevant context and generating a response..."):
-                    try:
-                        start_time = time.time()
-                        execution_response = prompting_stage.generate_answer(rag_orchestration_chain, user_query)
-                        elapsed = time.time() - start_time
+                    with st.spinner("Scanning archive and composing response..."):
+                        try:
+                            start_time = time.time()
+                            execution_response = prompting_stage.generate_answer(rag_orchestration_chain, user_query)
+                            elapsed = time.time() - start_time
 
-                        answer_text = execution_response["answer"]
-                        st.write(answer_text)
-                        st.caption(f"⏱️ {elapsed:.2f}s")
+                            answer_text = execution_response["answer"]
+                            st.write(answer_text)
+                            st.caption(f"⏱ {elapsed:.2f}s response time")
 
-                        sources = []
-                        for document in execution_response["context"]:
-                            sources.append({
-                                "file": os.path.basename(document.metadata.get("source", "Unknown_Reference.pdf")),
-                                "page": document.metadata.get("page", "N/A"),
-                                "content": document.page_content,
-                            })
+                            sources = []
+                            for document in execution_response["context"]:
+                                sources.append({
+                                    "file": os.path.basename(document.metadata.get("source", "Unknown_Reference.pdf")),
+                                    "page": document.metadata.get("page", "N/A"),
+                                    "content": document.page_content,
+                                })
 
-                        if sources:
-                            with st.expander(f"📄 Sources used ({len(sources)})"):
-                                for src in sources:
-                                    st.markdown(
-                                        f"""
-                                        <div class="source-card">
-                                            <div class="source-title">📄 {src['file']} — page {src['page']}</div>
-                                        </div>
-                                        """,
-                                        unsafe_allow_html=True,
-                                    )
-                                    st.info(src["content"])
+                            if sources:
+                                with st.expander(f"📎 Sources ({len(sources)})"):
+                                    for src in sources:
+                                        st.markdown(f"**{src['file']}** — page {src['page']}")
+                                        st.caption(src["content"][:400])
 
-                        entry["answer"] = answer_text
-                        entry["sources"] = sources
-                        entry["elapsed"] = elapsed
-                        entry["not_found"] = NOT_AVAILABLE_PHRASE in answer_text.lower()
-                    except Exception as e:
-                        error_message = (
-                            f"An error occurred while generating the answer: {e}\n\n"
-                            "If the error mentions the model is unavailable (not supported / 404), "
-                            "change the `LLM_REPO_ID` value in config.py to a model currently available at "
-                            "https://huggingface.co/models?inference_provider=all&pipeline_tag=text-generation"
-                        )
-                        st.error(error_message)
-                        entry["error"] = error_message
-            else:
-                warning_message = (
-                    "RAG pipeline is offline. Upload PDF files from the sidebar and run "
-                    "the Ingestion Pipeline first."
-                )
-                st.warning(warning_message)
-                entry["warning"] = warning_message
+                            entry["answer"] = answer_text
+                            entry["sources"] = sources
+                            entry["elapsed"] = elapsed
+                            entry["not_found"] = NOT_AVAILABLE_PHRASE in answer_text.lower()
+                        except Exception as e:
+                            error_message = (
+                                f"An error occurred while generating the answer: {e}\n\n"
+                                "If the error mentions the model is unavailable (not supported / 404), "
+                                "change `LLM_REPO_ID` in config.py to a model currently available at "
+                                "https://huggingface.co/models?inference_provider=all&pipeline_tag=text-generation"
+                            )
+                            st.error(error_message)
+                            entry["error"] = error_message
+                else:
+                    warning_message = (
+                        "RAG pipeline is offline. Upload PDF files from the Control Deck and run "
+                        "the Ingestion Pipeline first."
+                    )
+                    st.warning(warning_message)
+                    entry["warning"] = warning_message
 
         st.session_state.chat_history.append(entry)
 
 
 # ============================================================================
-# 8. PAGE: DOCUMENTS
+# 9. PAGE: ARCHIVE (documents)
 # ============================================================================
-def page_documents():
-    render_page_title("📁 Documents", "Manage the source PDFs that power your knowledge base.")
+def page_archive():
+    metadatas = get_chunk_metadatas()
 
     col1, col2, col3 = st.columns(3)
-    metric_card(col1, len(get_indexed_pdf_files()), "Total PDF Files", "📄", "grad-deep")
-    metric_card(col2, get_total_chunks(), "Total Chunks", "🧩", "grad-mid")
-
-    metadatas = get_chunk_metadatas()
+    pod(col1, len(get_indexed_pdf_files()), "Files in Archive", "cyan")
+    pod(col2, get_total_chunks(), "Total Vectors", "violet")
     unique_files_indexed = len({m.get("source") for m in metadatas if m.get("source")})
-    metric_card(col3, unique_files_indexed, "Files Actually Indexed", "🗂️", "grad-bright")
+    pod(col3, unique_files_indexed, "Files Actually Indexed", "amber")
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    render_section("Document Cartridges")
 
-    left, right = st.columns([3, 2])
+    files = get_indexed_pdf_files()
+    if not files:
+        st.info("No documents loaded yet. Use the Control Deck uploader to add PDF files.")
+    else:
+        cartridges_html = ""
+        for f in files:
+            file_path = os.path.join(PAPERS_DIR, f)
+            size_kb = round(os.path.getsize(file_path) / 1024, 1)
+            chunk_count = sum(1 for m in metadatas if os.path.basename(m.get("source", "")) == f)
+            status = "✅ indexed" if chunk_count > 0 else "⏳ pending"
+            cartridges_html += f"""
+            <div class="cartridge">
+                <div class="c-name">📄 {f}</div>
+                <div class="c-meta">{size_kb} KB · {chunk_count} chunks · {status}</div>
+            </div>
+            """
+        st.markdown(cartridges_html, unsafe_allow_html=True)
 
-    with left:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.markdown("#### 📄 Document List")
+    render_section("Chunk Distribution")
 
-        files = get_indexed_pdf_files()
-        if not files:
-            st.info("No documents uploaded yet. Use the uploader in the sidebar to add PDF files.")
-        else:
-            rows = []
-            for f in files:
-                file_path = os.path.join(PAPERS_DIR, f)
-                size_kb = round(os.path.getsize(file_path) / 1024, 1)
-                chunk_count = sum(
-                    1 for m in metadatas
-                    if os.path.basename(m.get("source", "")) == f
-                )
-                rows.append({
-                    "File Name": f,
-                    "Size (KB)": size_kb,
-                    "Chunks Indexed": chunk_count,
-                    "Status": "✅ Indexed" if chunk_count > 0 else "⏳ Pending ingestion",
-                })
-            st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+    if metadatas:
+        filenames_list = [os.path.basename(m.get("source", "Unknown")) for m in metadatas]
+        counts = pd.Series(filenames_list).value_counts()
+        total = counts.sum()
+        palette = ["#38BDF8", "#A78BFA", "#FBBF24", "#F472B6", "#34D399"]
+        items = [
+            (name[:22] + ("…" if len(name) > 22 else ""), (count / total) * 100, palette[i % len(palette)])
+            for i, (name, count) in enumerate(counts.items())
+        ]
+        signal_bars(items)
+    else:
+        st.caption("No chunk data yet — run the ingestion pipeline to populate this view.")
 
-    with right:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.markdown("#### 📈 Chunks per Document")
-        if metadatas:
-            filenames_list = [os.path.basename(m.get("source", "Unknown")) for m in metadatas]
-            counts = pd.Series(filenames_list).value_counts().reset_index()
-            counts.columns = ["File", "Chunks"]
-            st.bar_chart(counts.set_index("File"))
-        else:
-            st.caption("No chunk data yet — run the ingestion pipeline to see this chart.")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.markdown("#### ⚙️ Ingestion Pipeline Steps")
+    render_section("Ingestion Pipeline")
+    st.markdown('<div class="glass">', unsafe_allow_html=True)
     st.markdown(
+        f"""
+        **01 · Load** — Read every PDF in `{PAPERS_DIR}/` via `PyPDFDirectoryLoader`.
+
+        **02 · Clean** — Normalize whitespace, drop blank pages.
+
+        **03 · Chunk** — Split into overlapping segments of **{CHUNK_SIZE}** chars (overlap **{CHUNK_OVERLAP}**).
+
+        **04 · Embed & Store** — Vectorize with **all-MiniLM-L6-v2**, persist to **ChromaDB** at `{DB_DIR}/`.
         """
-        1. **Load** — Read every PDF in `papers_to_chat/` using `PyPDFDirectoryLoader`.
-        2. **Clean** — Normalize whitespace and drop blank pages (`02_preprocessing.py`).
-        3. **Chunk** — Split into overlapping chunks of **{chunk_size}** characters
-           (overlap **{overlap}**) using `RecursiveCharacterTextSplitter`.
-        4. **Embed & Store** — Convert chunks to vectors with **all-MiniLM-L6-v2** and
-           persist them in **ChromaDB** at `{db_dir}/`.
-        """.format(chunk_size=CHUNK_SIZE, overlap=CHUNK_OVERLAP, db_dir=DB_DIR)
     )
-    st.caption("Trigger this pipeline any time from the sidebar's 'Execute Ingestion Pipeline' button.")
     st.markdown("</div>", unsafe_allow_html=True)
 
 
 # ============================================================================
-# 9. PAGE: ANALYTICS
+# 10. PAGE: SIGNAL ANALYTICS
 # ============================================================================
-def page_analytics():
-    render_page_title("📊 Analytics", "A high-level view of your knowledge base and usage patterns.")
-
-    col1, col2, col3, col4 = st.columns(4)
+def page_signal_analytics():
     total_files = len(get_indexed_pdf_files())
     total_chunks = get_total_chunks()
     total_questions = len(st.session_state.chat_history)
     avg_chunks_per_file = round(total_chunks / total_files, 1) if total_files else 0
 
-    metric_card(col1, total_files, "Documents", "📄", "grad-deep")
-    metric_card(col2, total_chunks, "Chunks", "🧩", "grad-mid")
-    metric_card(col3, total_questions, "Questions Asked", "💬", "grad-bright")
-    metric_card(col4, avg_chunks_per_file, "Avg. Chunks / File", "📐", "grad-soft")
+    col1, col2, col3, col4 = st.columns(4)
+    pod(col1, total_files, "Documents", "cyan")
+    pod(col2, total_chunks, "Chunks", "violet")
+    pod(col3, total_questions, "Questions Asked", "amber")
+    pod(col4, avg_chunks_per_file, "Avg Chunks / File", "pink")
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    col_left, col_right = st.columns(2)
+    render_section("Document Distribution")
+    metadatas = get_chunk_metadatas()
+    if metadatas:
+        filenames_list = [os.path.basename(m.get("source", "Unknown")) for m in metadatas]
+        counts = pd.Series(filenames_list).value_counts()
+        total = counts.sum()
+        palette = ["#38BDF8", "#A78BFA", "#FBBF24", "#F472B6", "#34D399"]
+        items = [
+            (name[:22] + ("…" if len(name) > 22 else ""), (count / total) * 100, palette[i % len(palette)])
+            for i, (name, count) in enumerate(counts.items())
+        ]
+        signal_bars(items)
+    else:
+        st.caption("No indexed data yet.")
 
-    with col_left:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.markdown("#### 🗂️ Document Distribution")
-        metadatas = get_chunk_metadatas()
-        if metadatas:
-            filenames_list = [os.path.basename(m.get("source", "Unknown")) for m in metadatas]
-            counts = pd.Series(filenames_list).value_counts().reset_index()
-            counts.columns = ["File", "Chunks"]
-            st.bar_chart(counts.set_index("File"))
-        else:
-            st.caption("No indexed data yet.")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    with col_right:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.markdown("#### 🧠 Classified Topics This Session")
-        if st.session_state.classification_log:
-            cats = [
-                CATEGORY_LABELS.get(c["category"], c["category"])
-                for c in st.session_state.classification_log
-            ]
-            counts = pd.Series(cats).value_counts().reset_index()
-            counts.columns = ["Domain", "Count"]
-            st.bar_chart(counts.set_index("Domain"))
-        else:
-            st.caption("Ask a question to see topic classification analytics here.")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.markdown("#### 🕐 Session Activity Log")
+    render_section("Classified Topics — This Session")
     if st.session_state.classification_log:
-        log_rows = [
+        cats = [c["category"] for c in st.session_state.classification_log]
+        counts = pd.Series(cats).value_counts()
+        total = counts.sum()
+        items = [
+            (CATEGORY_LABELS.get(cat, cat), (count / total) * 100, CATEGORY_COLORS.get(cat, "#38BDF8"))
+            for cat, count in counts.items()
+        ]
+        signal_bars(items)
+    else:
+        st.caption("Ask a question to populate topic analytics.")
+
+    render_section("Session Activity Log")
+    if st.session_state.classification_log:
+        rows = [
             {
-                "Time": c["timestamp"].strftime("%H:%M:%S"),
-                "Query": c["text"][:80] + ("..." if len(c["text"]) > 80 else ""),
-                "Predicted Domain": CATEGORY_LABELS.get(c["category"], c["category"]),
-                "Confidence": f"{c['confidence']:.1f}%",
+                "dot": "neutral",
+                "time": c["timestamp"].strftime("%H:%M:%S"),
+                "text": c["text"][:90] + ("..." if len(c["text"]) > 90 else ""),
+                "badge": CATEGORY_LABELS.get(c["category"], c["category"]),
             }
             for c in reversed(st.session_state.classification_log)
         ]
-        st.dataframe(pd.DataFrame(log_rows), use_container_width=True, hide_index=True)
+        render_terminal_log(rows)
     else:
         st.caption("No activity yet this session.")
-    st.markdown("</div>", unsafe_allow_html=True)
 
 
 # ============================================================================
-# 10. PAGE: ANSWER ACCURACY
+# 11. PAGE: PRECISION METRICS (answer accuracy)
 # ============================================================================
-def page_answer_accuracy():
-    render_page_title("🎯 Answer Accuracy", "Quality signals for the answers generated by the RAG pipeline.")
-
+def page_precision_metrics():
     answered_entries = [e for e in st.session_state.chat_history if e.get("answer")]
     total_answered = len(answered_entries)
     not_found_count = sum(1 for e in answered_entries if e.get("not_found"))
@@ -861,89 +983,60 @@ def page_answer_accuracy():
         if total_answered else 0
     )
 
-    col1, col2, col3, col4 = st.columns(4)
-    metric_card(col1, total_answered, "Answers Generated", "✍️", "grad-deep")
-    metric_card(col2, f"{grounded_rate}%", "Grounded in Context", "✅", "grad-mid", sub="Answer was not 'not available'")
-    metric_card(col3, f"{avg_elapsed}s", "Avg. Response Time", "⏱️", "grad-bright")
-    metric_card(col4, avg_sources, "Avg. Sources per Answer", "📎", "grad-soft")
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st.markdown('<div class="glass" style="text-align:center;">', unsafe_allow_html=True)
+        st.markdown(svg_gauge(grounded_rate, label="GROUNDED", color="#34D399", size=170), unsafe_allow_html=True)
+        st.caption("Share of answers grounded in retrieved context (not flagged 'not available').")
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    with col2:
+        sub1, sub2, sub3 = st.columns(3)
+        pod(sub1, total_answered, "Answers Generated", "cyan")
+        pod(sub2, f"{avg_elapsed}s", "Avg Response Time", "violet")
+        pod(sub3, avg_sources, "Avg Sources / Answer", "amber")
 
     if not answered_entries:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
+        render_section("No Data Yet")
         st.info(
-            "No generated answers yet. Ask a few questions on the Home page — this page will "
-            "then show response time, grounding rate, and source usage across your session."
+            "No generated answers yet. Ask a few questions in Mission Control — this page "
+            "will then chart response time, grounding rate, and source usage."
         )
-        st.markdown("</div>", unsafe_allow_html=True)
         return
 
-    col_left, col_right = st.columns(2)
+    render_section("Response Time Trend")
+    timings = [round(e.get("elapsed", 0), 2) for e in answered_entries]
+    st.markdown(sparkline(timings, color="#38BDF8"), unsafe_allow_html=True)
+    st.caption(f"Across {len(timings)} answered question(s), most recent on the right.")
 
-    with col_left:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.markdown("#### ⏱️ Response Time per Question")
-        timing_df = pd.DataFrame({
-            "Question #": list(range(1, total_answered + 1)),
-            "Seconds": [round(e.get("elapsed", 0), 2) for e in answered_entries],
-        })
-        st.line_chart(timing_df.set_index("Question #"))
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    with col_right:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.markdown("#### 📎 Sources Retrieved per Question")
-        sources_df = pd.DataFrame({
-            "Question #": list(range(1, total_answered + 1)),
-            "Sources": [len(e.get("sources", [])) for e in answered_entries],
-        })
-        st.bar_chart(sources_df.set_index("Question #"))
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.markdown("#### 🔍 Answer Grounding Detail")
-    st.caption(
-        "An answer is flagged 'Not grounded' when the model explicitly said the requested "
-        "information isn't available in the ingested references — this means the retrieved "
-        "context didn't contain a confident answer, rather than the model guessing."
-    )
-    detail_rows = [
+    render_section("Answer Grounding Detail")
+    rows = [
         {
-            "Query": e["query"][:70] + ("..." if len(e["query"]) > 70 else ""),
-            "Response Time": f"{e.get('elapsed', 0):.2f}s",
-            "Sources Used": len(e.get("sources", [])),
-            "Grounded": "❌ Not grounded" if e.get("not_found") else "✅ Grounded",
+            "dot": "bad" if e.get("not_found") else "ok",
+            "time": f"{e.get('elapsed', 0):.2f}s",
+            "text": e["query"][:80] + ("..." if len(e["query"]) > 80 else ""),
+            "badge": f"{len(e.get('sources', []))} src" if not e.get("not_found") else "no match",
         }
         for e in answered_entries
     ]
-    st.dataframe(pd.DataFrame(detail_rows), use_container_width=True, hide_index=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+    render_terminal_log(rows)
 
 
 # ============================================================================
-# 11. PAGE: CLASSIFICATION
+# 12. PAGE: DOMAIN SCANNER (classification)
 # ============================================================================
-def page_classification():
-    render_page_title(
-        "🧠 Classification",
-        "Test the standalone LSTM domain classifier — independent from the RAG answer generation.",
-    )
-
-    st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.markdown("#### 🔤 Try the Classifier")
-    st.caption(
-        "Paste any research abstract or question. The LSTM model predicts which of the 4 "
-        "trained academic domains it belongs to, with a confidence score for each."
-    )
+def page_domain_scanner():
+    st.markdown('<div class="glass">', unsafe_allow_html=True)
+    st.markdown("**Scan any text against the standalone LSTM domain classifier** — independent from RAG generation.")
 
     sample_text = st.text_area(
-        "Text to classify",
+        "Text to scan",
         placeholder="Paste an abstract or research question here...",
         height=120,
+        label_visibility="collapsed",
     )
 
-    if st.button("🔎 Classify Text", type="primary"):
+    if st.button("🧬 Run Scan", type="primary"):
         if sample_text.strip():
             result = classify_text(sample_text)
             st.session_state.classification_log.append({
@@ -955,49 +1048,42 @@ def page_classification():
             })
 
             st.markdown("<br>", unsafe_allow_html=True)
-            col1, col2 = st.columns(2)
-            with col1:
-                st.metric(
-                    "Predicted Domain",
-                    CATEGORY_LABELS.get(result["category"], result["category"]),
+            gauge_col, dist_col = st.columns([1, 2])
+            with gauge_col:
+                st.markdown(
+                    svg_gauge(
+                        result["confidence"],
+                        label=CATEGORY_LABELS.get(result["category"], result["category"]),
+                        color=CATEGORY_COLORS.get(result["category"], "#38BDF8"),
+                        size=160,
+                    ),
+                    unsafe_allow_html=True,
                 )
-            with col2:
-                st.metric("Confidence", f"{result['confidence']:.2f}%")
-
-            st.markdown("##### Probability Distribution")
-            dist_df = pd.DataFrame({
-                "Domain": [CATEGORY_LABELS[c] for c in TOP_CATEGORIES],
-                "Probability (%)": [result["distribution"][c] for c in TOP_CATEGORIES],
-            })
-            st.bar_chart(dist_df.set_index("Domain"))
+            with dist_col:
+                st.markdown("**Probability Distribution**")
+                items = [
+                    (CATEGORY_LABELS[c], result["distribution"][c], CATEGORY_COLORS[c])
+                    for c in TOP_CATEGORIES
+                ]
+                signal_bars(items)
         else:
-            st.warning("Please enter some text to classify.")
+            st.warning("Please enter some text to scan.")
     st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.markdown("#### 📚 Trained Domains")
+    render_section("Trained Domains")
     domain_cols = st.columns(4)
     domain_descriptions = {
-        "cs": "Computer science, machine learning, algorithms, and software systems.",
-        "math": "Pure and applied mathematics, proofs, and mathematical modeling.",
+        "cs": "Computer science, machine learning, algorithms & software systems.",
+        "math": "Pure and applied mathematics, proofs & modeling.",
         "physics": "General physics research, excluding astrophysics-specific topics.",
-        "astro-ph": "Astrophysics, cosmology, and observational astronomy.",
+        "astro-ph": "Astrophysics, cosmology & observational astronomy.",
     }
-    gradients = ["grad-deep", "grad-mid", "grad-bright", "grad-soft"]
+    accents = ["cyan", "violet", "amber", "pink"]
     for i, cat in enumerate(TOP_CATEGORIES):
-        metric_card(
-            domain_cols[i],
-            CATEGORY_LABELS[cat],
-            domain_descriptions[cat],
-            "🔖",
-            gradients[i % len(gradients)],
-        )
-    st.markdown("</div>", unsafe_allow_html=True)
+        pod(domain_cols[i], CATEGORY_LABELS[cat], domain_descriptions[cat], accents[i % len(accents)])
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.markdown("#### 🏗️ Model Architecture")
+    render_section("Model Architecture")
+    st.markdown('<div class="glass">', unsafe_allow_html=True)
     st.code(
         f"""Input (max_length={MAX_SEQUENCE_LENGTH})
 → Embedding(vocab_size={VOCAB_SIZE}, dim={EMBEDDING_DIM})
@@ -1009,37 +1095,31 @@ def page_classification():
 → Dense({len(TOP_CATEGORIES)}, activation='softmax')""",
         language="text",
     )
-    st.caption("Trained in train_model.py and loaded here via load_weights() for cross-version compatibility.")
+    st.caption("Trained in train_model.py; loaded here via load_weights() for cross-version compatibility.")
     st.markdown("</div>", unsafe_allow_html=True)
 
     if st.session_state.classification_log:
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.markdown("#### 📜 Classification History (this session)")
-        log_rows = [
+        render_section("Scan History — This Session")
+        rows = [
             {
-                "Time": c["timestamp"].strftime("%H:%M:%S"),
-                "Text": c["text"][:70] + ("..." if len(c["text"]) > 70 else ""),
-                "Domain": CATEGORY_LABELS.get(c["category"], c["category"]),
-                "Confidence": f"{c['confidence']:.1f}%",
-                "Source": "Chat" if c["source"] == "chat" else "Classification Page",
+                "dot": "neutral",
+                "time": c["timestamp"].strftime("%H:%M:%S"),
+                "text": c["text"][:80] + ("..." if len(c["text"]) > 80 else ""),
+                "badge": f"{CATEGORY_LABELS.get(c['category'], c['category'])} · {c['confidence']:.0f}%",
             }
             for c in reversed(st.session_state.classification_log)
         ]
-        st.dataframe(pd.DataFrame(log_rows), use_container_width=True, hide_index=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+        render_terminal_log(rows)
 
 
 # ============================================================================
-# 12. ROUTER
+# 13. ROUTER
 # ============================================================================
-if page == "🏠 Home":
-    page_home()
-elif page == "📁 Documents":
-    page_documents()
-elif page == "📊 Analytics":
-    page_analytics()
-elif page == "🎯 Answer Accuracy":
-    page_answer_accuracy()
-elif page == "🧠 Classification":
-    page_classification()
+ROUTES = {
+    "Mission Control": page_mission_control,
+    "Archive": page_archive,
+    "Signal Analytics": page_signal_analytics,
+    "Precision Metrics": page_precision_metrics,
+    "Domain Scanner": page_domain_scanner,
+}
+ROUTES[st.session_state.active_page]()
