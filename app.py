@@ -1,4 +1,5 @@
 import sys
+import base64
 
 # --- 0. SQLite3 Workaround (required on Streamlit Community Cloud for ChromaDB) ---
 try:
