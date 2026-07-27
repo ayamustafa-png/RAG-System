@@ -103,7 +103,6 @@ def set_background(image_file):
     st.markdown(css, unsafe_allow_html=True)
 
 # Call the function with your local image filename
-set_background("background.png")
 # ============================================================================
 # 2. GLOBAL STYLE — "Mission Control" theme
 # ============================================================================
@@ -901,6 +900,7 @@ def page_mission_control():
                     entry["warning"] = warning_message
 
         st.session_state.chat_history.append(entry)
+set_background("background.png")
 
 
 # ============================================================================
