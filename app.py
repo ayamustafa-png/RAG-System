@@ -49,10 +49,10 @@ CATEGORY_LABELS = {
     "astro-ph": "Astrophysics",
 }
 CATEGORY_COLORS = {
-    "cs": "#38BDF8",
-    "math": "#A78BFA",
-    "physics": "#FBBF24",
-    "astro-ph": "#F472B6",
+    "cs": "#818CF8",
+    "math": "#4338CA",
+    "physics": "#2DD4BF",
+    "astro-ph": "#0D9488",
 }
 NOT_AVAILABLE_PHRASE = "not available"
 
@@ -67,9 +67,19 @@ PAGES = [
 # ============================================================================
 # 1. PAGE CONFIG
 # ============================================================================
+def _load_page_icon():
+    """بيحاول يفتح لوجو Scholar AI كصورة لاستخدامه كـ page icon، ولو مش موجود
+    (لسه ما اترفعش للريبو) بيرجع إيموجي بديل عشان التطبيق يفضل شغال من غير كسر."""
+    logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scholar_ai_icon.png")
+    if os.path.exists(logo_path):
+        from PIL import Image
+        return Image.open(logo_path)
+    return "📚"
+
+
 st.set_page_config(
-    page_title="Smart Academic Research Assistant — Mission Control",
-    page_icon="🛰️",
+    page_title="Scholar AI",
+    page_icon=_load_page_icon(),
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -90,10 +100,15 @@ st.markdown(
     }
 
     :root {
-        --cyan: #38BDF8;
-        --violet: #A78BFA;
-        --amber: #FBBF24;
-        --pink: #F472B6;
+        --cyan: #818CF8;
+        --violet: #4338CA;
+        --amber: #2DD4BF;
+        --pink: #0D9488;
+        --brand-navy: #1E1B4B;
+        --brand-indigo: #4338CA;
+        --brand-teal: #0D9488;
+        --brand-teal-light: #2DD4BF;
+        --brand-surface: #F8FAFC;
         --ink: #060A14;
         --panel: rgba(255,255,255,0.04);
         --panel-border: rgba(255,255,255,0.09);
@@ -115,7 +130,7 @@ st.markdown(
             radial-gradient(1.5px 1.5px at 12% 90%, rgba(255,255,255,0.3), transparent),
             radial-gradient(1px 1px at 47% 47%, rgba(255,255,255,0.35), transparent),
             radial-gradient(1.5px 1.5px at 74% 88%, rgba(255,255,255,0.3), transparent),
-            linear-gradient(160deg, #060A14 0%, #0A1128 45%, #0B1735 100%);
+            linear-gradient(160deg, #05040F 0%, #14113A 45%, #1E1B4B 100%);
         background-attachment: fixed;
     }
 
@@ -150,11 +165,21 @@ st.markdown(
         font-size: 28px;
         font-weight: 700;
         letter-spacing: 0.3px;
-        background: linear-gradient(90deg, #FFFFFF 20%, var(--cyan) 60%, var(--violet) 100%);
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent !important;
         margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    /* Solid, high-contrast colors instead of background-clip gradient text —
+       gradient-clip text can render invisible under some browsers, print
+       views, or forced dark-mode extensions. Solid colors always stay legible. */
+    .hud-title .brand-scholar { color: #FFFFFF !important; }
+    .hud-title .brand-ai { color: var(--brand-teal-light) !important; }
+    .hud-logo {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        flex-shrink: 0;
     }
     .hud-sub {
         color: var(--text-soft) !important;
@@ -366,14 +391,33 @@ st.markdown(
 # ============================================================================
 # SMALL RENDER HELPERS (custom SVG / HTML — no default chart widgets)
 # ============================================================================
+def get_logo_data_uri():
+    """بتقرا لوجو Scholar AI من الديسك وتحوّله base64 لعرضه جوا الـ HTML مباشرة.
+    لو الملف مش موجود لسه (متضافش للريبو)، بترجع None ويتم استخدام إيموجي بديل."""
+    logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scholar_ai_icon.png")
+    if not os.path.exists(logo_path):
+        return None
+    import base64
+    with open(logo_path, "rb") as f:
+        encoded = base64.b64encode(f.read()).decode("utf-8")
+    return f"data:image/png;base64,{encoded}"
+
+
 def render_hud(tags=None):
     tags_html = ""
     if tags:
         tags_html = "<div class='hud-tags'>" + "".join(f"<span class='hud-tag'>{t}</span>" for t in tags) + "</div>"
+
+    logo_uri = get_logo_data_uri()
+    logo_html = (
+        f'<img src="{logo_uri}" class="hud-logo" alt="Scholar AI logo"/>'
+        if logo_uri else "📚"
+    )
+
     st.markdown(
         f"""
         <div class="hud">
-            <div class="hud-title">🛰️ Smart Academic Research Assistant</div>
+            <div class="hud-title">{logo_html}<span class="brand-scholar">Scholar</span><span class="brand-ai">AI</span></div>
             <div class="hud-sub">Hybrid deep-learning classification + retrieval-augmented generation,
             running live against your own indexed research papers.</div>
             {tags_html}
@@ -401,7 +445,7 @@ def pod(column, value, label, accent="cyan", sub=None):
     )
 
 
-def svg_gauge(percentage, label="", color="#38BDF8", size=150):
+def svg_gauge(percentage, label="", color="#818CF8", size=150):
     percentage = max(0, min(100, percentage))
     radius = 52
     circumference = 2 * math.pi * radius
@@ -437,7 +481,7 @@ def signal_bars(items):
     st.markdown(rows, unsafe_allow_html=True)
 
 
-def sparkline(values, color="#38BDF8", width=560, height=90):
+def sparkline(values, color="#818CF8", width=560, height=90):
     if not values:
         return ""
     n = len(values)
@@ -729,7 +773,7 @@ def page_mission_control():
                     svg_gauge(
                         entry["confidence"],
                         label=CATEGORY_LABELS.get(entry["predicted_class"], entry["predicted_class"]),
-                        color=CATEGORY_COLORS.get(entry["predicted_class"], "#38BDF8"),
+                        color=CATEGORY_COLORS.get(entry["predicted_class"], "#818CF8"),
                         size=110,
                     ),
                     unsafe_allow_html=True,
@@ -782,7 +826,7 @@ def page_mission_control():
                     svg_gauge(
                         confidence_score,
                         label=CATEGORY_LABELS.get(predicted_class, predicted_class),
-                        color=CATEGORY_COLORS.get(predicted_class, "#38BDF8"),
+                        color=CATEGORY_COLORS.get(predicted_class, "#818CF8"),
                         size=110,
                     ),
                     unsafe_allow_html=True,
@@ -879,7 +923,7 @@ def page_archive():
         filenames_list = [os.path.basename(m.get("source", "Unknown")) for m in metadatas]
         counts = pd.Series(filenames_list).value_counts()
         total = counts.sum()
-        palette = ["#38BDF8", "#A78BFA", "#FBBF24", "#F472B6", "#34D399"]
+        palette = ["#818CF8", "#4338CA", "#2DD4BF", "#0D9488", "#34D399"]
         items = [
             (name[:22] + ("…" if len(name) > 22 else ""), (count / total) * 100, palette[i % len(palette)])
             for i, (name, count) in enumerate(counts.items())
@@ -925,7 +969,7 @@ def page_signal_analytics():
         filenames_list = [os.path.basename(m.get("source", "Unknown")) for m in metadatas]
         counts = pd.Series(filenames_list).value_counts()
         total = counts.sum()
-        palette = ["#38BDF8", "#A78BFA", "#FBBF24", "#F472B6", "#34D399"]
+        palette = ["#818CF8", "#4338CA", "#2DD4BF", "#0D9488", "#34D399"]
         items = [
             (name[:22] + ("…" if len(name) > 22 else ""), (count / total) * 100, palette[i % len(palette)])
             for i, (name, count) in enumerate(counts.items())
@@ -940,7 +984,7 @@ def page_signal_analytics():
         counts = pd.Series(cats).value_counts()
         total = counts.sum()
         items = [
-            (CATEGORY_LABELS.get(cat, cat), (count / total) * 100, CATEGORY_COLORS.get(cat, "#38BDF8"))
+            (CATEGORY_LABELS.get(cat, cat), (count / total) * 100, CATEGORY_COLORS.get(cat, "#818CF8"))
             for cat, count in counts.items()
         ]
         signal_bars(items)
@@ -1006,7 +1050,7 @@ def page_precision_metrics():
 
     render_section("Response Time Trend")
     timings = [round(e.get("elapsed", 0), 2) for e in answered_entries]
-    st.markdown(sparkline(timings, color="#38BDF8"), unsafe_allow_html=True)
+    st.markdown(sparkline(timings, color="#818CF8"), unsafe_allow_html=True)
     st.caption(f"Across {len(timings)} answered question(s), most recent on the right.")
 
     render_section("Answer Grounding Detail")
@@ -1054,7 +1098,7 @@ def page_domain_scanner():
                     svg_gauge(
                         result["confidence"],
                         label=CATEGORY_LABELS.get(result["category"], result["category"]),
-                        color=CATEGORY_COLORS.get(result["category"], "#38BDF8"),
+                        color=CATEGORY_COLORS.get(result["category"], "#818CF8"),
                         size=160,
                     ),
                     unsafe_allow_html=True,
