@@ -84,6 +84,23 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# 1. Define your background image URL
+background_image_url = "https://en.wikipedia.org/wiki/Typing#/media/File:Computer_keyboard.png"
+
+# 2. Inject CSS with st.markdown
+st.markdown(
+    f"""
+    <style>
+    .stApp {{
+        background-image: url("{background_image_url}");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 # ============================================================================
 # 2. GLOBAL STYLE — "Mission Control" theme
 # ============================================================================
