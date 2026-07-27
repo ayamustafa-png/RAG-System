@@ -84,23 +84,25 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# 1. Define your background image URL
-background_image_url = "https://en.wikipedia.org/wiki/Typing#/media/File:Computer_keyboard.png"
-
-# 2. Inject CSS with st.markdown
-st.markdown(
-    f"""
+def set_background(image_file):
+    with open(image_file, "rb") as f:
+        data = f.read()
+    encoded = base64.b64encode(data).decode()
+    
+    css = f"""
     <style>
     .stApp {{
-        background-image: url("{background_image_url}");
+        background-image: url("data:image/png;base64,{encoded}");
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
     }}
     </style>
-    """,
-    unsafe_allow_html=True
-)
+    """
+    st.markdown(css, unsafe_allow_html=True)
+
+# Call the function with your local image filename
+set_background("background.png")
 # ============================================================================
 # 2. GLOBAL STYLE — "Mission Control" theme
 # ============================================================================
