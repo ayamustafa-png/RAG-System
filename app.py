@@ -465,9 +465,9 @@ def svg_gauge(percentage, label="", color="#818CF8", size=150):
         stroke-dasharray="{circumference:.2f}" stroke-dashoffset="{offset:.2f}" stroke-linecap="round"
         transform="rotate(-90 60 60)" style="filter: drop-shadow(0 0 6px {color});"/>
       <text x="60" y="56" text-anchor="middle" font-family="Space Grotesk, sans-serif"
-        font-size="22" font-weight="700" fill="#FFFFFF">{percentage:.0f}%</text>
-      <text x="60" y="76" text-anchor="middle" font-family="JetBrains Mono, monospace"
-        font-size="9" fill="rgba(231,236,251,0.65)">{label}</text>
+        font-size="24" font-weight="700" fill="#1E1B4B">{percentage:.0f}%</text>
+      <text x="60" y="78" text-anchor="middle" font-family="JetBrains Mono, monospace"
+        font-size="10" font-weight="600" fill="#666B8C">{label}</text>
     </svg>
     """
 
