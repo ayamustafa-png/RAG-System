@@ -680,7 +680,16 @@ if "active_page" not in st.session_state:
 # 6. SIDEBAR — CONTROL DECK
 # ============================================================================
 with st.sidebar:
-    st.markdown("### 🛠️ Control Deck")
+    _sidebar_logo_uri = get_logo_data_uri()
+    _sidebar_logo_html = (
+        f'<img src="{_sidebar_logo_uri}" style="width:28px;height:28px;border-radius:7px;vertical-align:middle;margin-right:8px;"/>'
+        if _sidebar_logo_uri else "🛠️ "
+    )
+    st.markdown(
+        f'<div style="display:flex;align-items:center;gap:0;font-size:19px;font-weight:700;'
+        f'font-family:\'Space Grotesk\',sans-serif;margin-bottom:2px;">{_sidebar_logo_html}Control Deck</div>',
+        unsafe_allow_html=True,
+    )
     st.caption("Document intake & indexing operations.")
 
     uploaded_files = st.file_uploader(
