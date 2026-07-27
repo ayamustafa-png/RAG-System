@@ -100,7 +100,7 @@ st.markdown(
     }
 
     :root {
-        --cyan: #818CF8;
+        --cyan: #6366F1;
         --violet: #4338CA;
         --amber: #2DD4BF;
         --pink: #0D9488;
@@ -109,28 +109,17 @@ st.markdown(
         --brand-teal: #0D9488;
         --brand-teal-light: #2DD4BF;
         --brand-surface: #F8FAFC;
-        --ink: #060A14;
-        --panel: rgba(255,255,255,0.04);
-        --panel-border: rgba(255,255,255,0.09);
-        --text-main: #E7ECFB;
-        --text-soft: #8B95B3;
-        --success: #34D399;
-        --danger: #FB7185;
+        --ink: #1E1B4B;
+        --panel: #FFFFFF;
+        --panel-border: #E4E1F7;
+        --text-main: #1E1B4B;
+        --text-soft: #666B8C;
+        --success: #0D9488;
+        --danger: #E11D48;
     }
 
     .stApp {
-        background:
-            radial-gradient(1.5px 1.5px at 8% 15%, rgba(255,255,255,0.55), transparent),
-            radial-gradient(1.5px 1.5px at 22% 65%, rgba(255,255,255,0.4), transparent),
-            radial-gradient(1px 1px at 38% 28%, rgba(255,255,255,0.5), transparent),
-            radial-gradient(1.5px 1.5px at 54% 80%, rgba(255,255,255,0.35), transparent),
-            radial-gradient(1px 1px at 68% 12%, rgba(255,255,255,0.5), transparent),
-            radial-gradient(1.5px 1.5px at 83% 55%, rgba(255,255,255,0.4), transparent),
-            radial-gradient(1px 1px at 93% 35%, rgba(255,255,255,0.45), transparent),
-            radial-gradient(1.5px 1.5px at 12% 90%, rgba(255,255,255,0.3), transparent),
-            radial-gradient(1px 1px at 47% 47%, rgba(255,255,255,0.35), transparent),
-            radial-gradient(1.5px 1.5px at 74% 88%, rgba(255,255,255,0.3), transparent),
-            linear-gradient(160deg, #05040F 0%, #14113A 45%, #1E1B4B 100%);
+        background: linear-gradient(160deg, #F5F3FF 0%, #F1F5FF 45%, #ECFDF9 100%);
         background-attachment: fixed;
     }
 
@@ -139,7 +128,7 @@ st.markdown(
     }
 
     section[data-testid="stSidebar"] {
-        background: #060A14;
+        background: #FDFCFF;
         border-right: 1px solid var(--panel-border);
     }
     section[data-testid="stSidebar"] * { color: var(--text-main) !important; }
@@ -151,13 +140,14 @@ st.markdown(
         border-radius: 20px;
         padding: 28px 34px;
         margin-bottom: 20px;
-        background: linear-gradient(115deg, rgba(56,189,248,0.10) 0%, rgba(167,139,250,0.10) 50%, rgba(244,114,182,0.08) 100%);
-        border: 1px solid var(--panel-border);
+        background: linear-gradient(115deg, var(--brand-navy) 0%, var(--brand-indigo) 55%, var(--brand-teal) 100%);
+        box-shadow: 0 16px 36px rgba(67, 56, 202, 0.28);
+        border: 1px solid rgba(255,255,255,0.08);
     }
     .hud::before {
         content: "";
         position: absolute; inset: 0;
-        background: repeating-linear-gradient(90deg, transparent, transparent 38px, rgba(255,255,255,0.025) 39px, transparent 40px);
+        background: repeating-linear-gradient(90deg, transparent, transparent 38px, rgba(255,255,255,0.04) 39px, transparent 40px);
         pointer-events: none;
     }
     .hud-title {
@@ -182,7 +172,7 @@ st.markdown(
         flex-shrink: 0;
     }
     .hud-sub {
-        color: var(--text-soft) !important;
+        color: rgba(255,255,255,0.82) !important;
         font-size: 13px;
         margin-top: 8px;
         line-height: 1.6;
@@ -194,9 +184,9 @@ st.markdown(
         font-size: 10.5px;
         letter-spacing: 0.6px;
         text-transform: uppercase;
-        border: 1px solid var(--panel-border);
-        background: rgba(255,255,255,0.03);
-        color: var(--cyan) !important;
+        border: 1px solid rgba(255,255,255,0.22);
+        background: rgba(255,255,255,0.10);
+        color: #FFFFFF !important;
         padding: 4px 10px;
         border-radius: 6px;
         margin: 3px 6px 3px 0;
@@ -213,7 +203,7 @@ st.markdown(
         font-family: 'JetBrains Mono', monospace;
         font-size: 11.5px;
         letter-spacing: 2px;
-        color: var(--cyan) !important;
+        color: var(--brand-indigo) !important;
         white-space: nowrap;
     }
     .section-divider::after {
@@ -229,28 +219,28 @@ st.markdown(
         border: 1px solid var(--panel-border);
         border-radius: 18px;
         padding: 22px 24px;
-        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 24px rgba(67, 56, 202, 0.07);
     }
 
-    /* ===== Stat pods ===== */
+    /* ===== Stat pods — full two-tone gradients, not just an edge line ===== */
     .pod {
         position: relative;
         border-radius: 16px;
         padding: 18px 20px;
-        border: 1px solid var(--panel-border);
-        background: linear-gradient(160deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+        border: 1px solid rgba(255,255,255,0.12);
         height: 100%;
         overflow: hidden;
+        box-shadow: 0 10px 26px rgba(30, 27, 75, 0.16);
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
     }
-    .pod::before {
-        content: "";
-        position: absolute; top: 0; left: 0; bottom: 0;
-        width: 3px;
+    .pod:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 16px 34px rgba(30, 27, 75, 0.24);
     }
-    .pod-cyan::before   { background: var(--cyan); box-shadow: 0 0 12px var(--cyan); }
-    .pod-violet::before { background: var(--violet); box-shadow: 0 0 12px var(--violet); }
-    .pod-amber::before  { background: var(--amber); box-shadow: 0 0 12px var(--amber); }
-    .pod-pink::before   { background: var(--pink); box-shadow: 0 0 12px var(--pink); }
+    .pod-cyan   { background: linear-gradient(135deg, #6366F1 0%, #4338CA 100%); }
+    .pod-violet { background: linear-gradient(135deg, #1E1B4B 0%, #4338CA 100%); }
+    .pod-amber  { background: linear-gradient(135deg, #2DD4BF 0%, #0D9488 100%); }
+    .pod-pink   { background: linear-gradient(135deg, #0D9488 0%, #1E1B4B 100%); }
     .pod-value {
         font-family: 'Space Grotesk', sans-serif;
         font-size: 26px;
@@ -261,14 +251,13 @@ st.markdown(
         font-size: 11px;
         letter-spacing: 0.5px;
         text-transform: uppercase;
-        color: var(--text-soft) !important;
+        color: rgba(255,255,255,0.82) !important;
         margin-top: 4px;
     }
     .pod-sub {
         font-size: 10.5px;
-        color: var(--text-soft) !important;
+        color: rgba(255,255,255,0.68) !important;
         margin-top: 6px;
-        opacity: 0.8;
     }
 
     /* ===== Signal bars (custom horizontal chart) ===== */
@@ -288,7 +277,7 @@ st.markdown(
         flex: 1;
         height: 10px;
         border-radius: 6px;
-        background: rgba(255,255,255,0.06);
+        background: #EEECFB;
         overflow: hidden;
     }
     .signal-fill {
@@ -299,7 +288,7 @@ st.markdown(
         width: 52px;
         text-align: right;
         font-size: 11.5px;
-        color: #FFFFFF !important;
+        color: var(--text-main) !important;
         flex-shrink: 0;
     }
 
@@ -312,8 +301,8 @@ st.markdown(
         border-radius: 8px;
         font-size: 12px;
         margin-bottom: 4px;
-        background: rgba(255,255,255,0.02);
-        border: 1px solid rgba(255,255,255,0.04);
+        background: #FFFFFF;
+        border: 1px solid var(--panel-border);
     }
     .term-dot {
         width: 8px; height: 8px;
@@ -323,7 +312,7 @@ st.markdown(
     }
     .dot-ok { background: var(--success); box-shadow: 0 0 6px var(--success); }
     .dot-bad { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
-    .dot-neutral { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+    .dot-neutral { background: var(--brand-indigo); box-shadow: 0 0 6px var(--brand-indigo); }
     .term-time {
         color: var(--text-soft) !important;
         width: 68px;
@@ -334,8 +323,8 @@ st.markdown(
         font-size: 10px;
         padding: 2px 8px;
         border-radius: 5px;
-        background: rgba(255,255,255,0.06);
-        color: var(--cyan) !important;
+        background: #EEECFB;
+        color: var(--brand-indigo) !important;
         flex-shrink: 0;
     }
 
@@ -345,7 +334,7 @@ st.markdown(
         flex-direction: column;
         gap: 2px;
         border: 1px solid var(--panel-border);
-        background: linear-gradient(160deg, rgba(56,189,248,0.08), rgba(255,255,255,0.02));
+        background: linear-gradient(160deg, #F0F0FE, #FFFFFF);
         border-radius: 12px;
         padding: 10px 14px;
         margin: 4px;
@@ -364,7 +353,7 @@ st.markdown(
         padding: 6px 14px;
         border-radius: 999px;
         border: 1px solid var(--panel-border);
-        background: rgba(255,255,255,0.03);
+        background: #FFFFFF;
     }
     .readout .rdot { width: 8px; height: 8px; border-radius: 50%; }
 
